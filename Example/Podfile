@@ -1,0 +1,8 @@
+use_frameworks!
+
+
+target 'YHNetCore_Tests', :exclusive => true do
+  pod 'YHNetCore', :path => '../'
+
+  
+end
