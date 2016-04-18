@@ -1,0 +1,14 @@
+PODS:
+  - YHNetCore (0.1.0)
+
+DEPENDENCIES:
+  - YHNetCore (from `../`)
+
+EXTERNAL SOURCES:
+  YHNetCore:
+    :path: "../"
+
+SPEC CHECKSUMS:
+  YHNetCore: 92606517202260cff76e67b7712344ec23066f9c
+
+COCOAPODS: 0.39.0
