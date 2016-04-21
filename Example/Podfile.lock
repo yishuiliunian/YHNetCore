@@ -1,5 +1,13 @@
 PODS:
-  - YHNetCore (0.1.0)
+  - CocoaAsyncSocket (7.4.3):
+    - CocoaAsyncSocket/All (= 7.4.3)
+  - CocoaAsyncSocket/All (7.4.3):
+    - CocoaAsyncSocket/GCD
+    - CocoaAsyncSocket/RunLoop
+  - CocoaAsyncSocket/GCD (7.4.3)
+  - CocoaAsyncSocket/RunLoop (7.4.3)
+  - YHNetCore (0.1.0):
+    - CocoaAsyncSocket
 
 DEPENDENCIES:
   - YHNetCore (from `../`)
@@ -9,6 +17,7 @@ EXTERNAL SOURCES:
     :path: "../"
 
 SPEC CHECKSUMS:
-  YHNetCore: 92606517202260cff76e67b7712344ec23066f9c
+  CocoaAsyncSocket: a18c75dca4b08723628a0bacca6e94803d90be91
+  YHNetCore: 32ffe91fbba244e211cb1a8a75f98db07dd98add
 
 COCOAPODS: 0.39.0

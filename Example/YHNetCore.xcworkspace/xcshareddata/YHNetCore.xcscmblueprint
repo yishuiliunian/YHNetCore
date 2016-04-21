@@ -1,0 +1,30 @@
+{
+  "DVTSourceControlWorkspaceBlueprintPrimaryRemoteRepositoryKey" : "7F5530A90C7E3EE8A8EA63BDE54A3D3C78199D3B",
+  "DVTSourceControlWorkspaceBlueprintWorkingCopyRepositoryLocationsKey" : {
+
+  },
+  "DVTSourceControlWorkspaceBlueprintWorkingCopyStatesKey" : {
+    "7F5530A90C7E3EE8A8EA63BDE54A3D3C78199D3B" : 0,
+    "1B23271DFD8F6C89B88A32538D78366B7561A866" : 0
+  },
+  "DVTSourceControlWorkspaceBlueprintIdentifierKey" : "7D30A508-5F67-4123-9BD2-9B8F0DE3CCC5",
+  "DVTSourceControlWorkspaceBlueprintWorkingCopyPathsKey" : {
+    "7F5530A90C7E3EE8A8EA63BDE54A3D3C78199D3B" : "YHNetCore\/",
+    "1B23271DFD8F6C89B88A32538D78366B7561A866" : ".."
+  },
+  "DVTSourceControlWorkspaceBlueprintNameKey" : "YHNetCore",
+  "DVTSourceControlWorkspaceBlueprintVersion" : 204,
+  "DVTSourceControlWorkspaceBlueprintRelativePathToProjectKey" : "Example\/YHNetCore.xcworkspace",
+  "DVTSourceControlWorkspaceBlueprintRemoteRepositoriesKey" : [
+    {
+      "DVTSourceControlWorkspaceBlueprintRemoteRepositoryURLKey" : "ssh:\/\/www.catchitime.com:8022\/diffusion\/YH\/yaohe.git",
+      "DVTSourceControlWorkspaceBlueprintRemoteRepositorySystemKey" : "com.apple.dt.Xcode.sourcecontrol.Git",
+      "DVTSourceControlWorkspaceBlueprintRemoteRepositoryIdentifierKey" : "1B23271DFD8F6C89B88A32538D78366B7561A866"
+    },
+    {
+      "DVTSourceControlWorkspaceBlueprintRemoteRepositoryURLKey" : "ssh:\/\/www.catchitime.com:8022\/diffusion\/YHNETCORE\/yhnetcore.git",
+      "DVTSourceControlWorkspaceBlueprintRemoteRepositorySystemKey" : "com.apple.dt.Xcode.sourcecontrol.Git",
+      "DVTSourceControlWorkspaceBlueprintRemoteRepositoryIdentifierKey" : "7F5530A90C7E3EE8A8EA63BDE54A3D3C78199D3B"
+    }
+  ]
+}
