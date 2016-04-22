@@ -7,7 +7,11 @@
 //
 
 #import <Foundation/Foundation.h>
-
+#import "YHNetSender.h"
+#import "YHNetRespHandler.h"
 @interface YHNetCommunicator : NSObject
-
+@property (nonatomic, strong, readonly) YHNetSender* sender;
+@property (nonatomic, strong, readonly) YHNetRespHandler* respHandler;
 @end
+
+

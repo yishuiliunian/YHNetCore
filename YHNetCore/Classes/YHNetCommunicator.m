@@ -7,7 +7,7 @@
 //
 
 #import "YHNetCommunicator.h"
-
+#import "YHNetCommunicator_Private.h"
 @implementation YHNetCommunicator
 
 @end

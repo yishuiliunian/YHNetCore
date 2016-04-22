@@ -28,7 +28,6 @@ NS_ENUM(NSInteger, YHNetConnectionFlag) {
 @class YHNetCommunicator;
 @class YHEndPoint;
 @interface YHNetSocketConnection : NSObject
-
 - (instancetype) initWithCommunicator:(YHNetCommunicator*)c;
 - (BOOL) openWithEndPoint:(YHEndPoint *)point error:(NSError* __autoreleasing*) error;
 @end
