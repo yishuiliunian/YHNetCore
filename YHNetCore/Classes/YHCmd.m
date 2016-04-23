@@ -1,0 +1,33 @@
+//
+//  YHCmd.m
+//  Pods
+//
+//  Created by stonedong on 16/4/23.
+//
+//
+
+#import "YHCmd.h"
+
+@implementation YHCmd
+
++ (instancetype) cmdWithServant:(NSString *)servant method:(NSString *)method
+{
+    return [[YHCmd alloc] initWithServant:servant method:method];
+}
+- (instancetype) initWithServant:(NSString *)servant method:(NSString *)method
+{
+    self = [super init];
+    if (!self) {
+        return self;
+    }
+    _servant = servant;
+    _method = method;
+    return self;
+}
+
+- (NSString*) description
+{
+    return [NSString stringWithFormat:@"Servant:%@  Method:%@", _servant, _method];
+}
+
+@end

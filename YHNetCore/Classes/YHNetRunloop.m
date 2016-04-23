@@ -50,4 +50,57 @@ static NSRunLoop* YHGlobalRunloop = nil;
 {
     return @[NSDefaultRunLoopMode];
 }
+
+
++ (void) addSource:(CFRunLoopSourceRef)source
+{
+    for (NSString* model in [self runloopModes]) {
+        CFRunLoopAddSource([[self runloop]  getCFRunLoop], source,(__bridge CFStringRef)model);
+    }
+}
+
++ (void) removeSource:(CFRunLoopSourceRef)source
+{
+     for (NSString* model in [self runloopModes]) {
+        CFRunLoopRemoveSource([[self runloop]  getCFRunLoop], source,(__bridge CFStringRef)model);
+    }
+}
+
++ (void) addTimer:(NSTimer*)timer
+{
+    for (NSString* model in [self runloopModes]) {
+        CFRunLoopAddTimer([[self runloop]  getCFRunLoop], (__bridge CFRunLoopTimerRef)timer ,(__bridge CFStringRef)model);
+    }
+}
+
++ (void) removeTimer:(NSTimer*)timer
+{
+    for (NSString* model in [self runloopModes]) {
+        CFRunLoopRemoveTimer ([[self runloop]  getCFRunLoop], (__bridge CFRunLoopTimerRef)timer ,(__bridge CFStringRef)model);
+    }
+}
+
++ (void) scheduleReadStream:(CFReadStreamRef)stream{
+    for (NSString* model in [self runloopModes]) {
+        CFReadStreamScheduleWithRunLoop ( stream ,[[self runloop]  getCFRunLoop],(__bridge CFStringRef)model);
+    }
+}
+
++ (void) unscheduleReadStream:(CFReadStreamRef)stream {
+    for (NSString* model in [self runloopModes]) {
+        CFReadStreamUnscheduleFromRunLoop ( stream ,[[self runloop]  getCFRunLoop],(__bridge CFStringRef)model);
+    }
+}
+
++ (void) scheduleWriteStream:(CFWriteStreamRef)stream {
+    for (NSString* model in [self runloopModes]) {
+        CFWriteStreamScheduleWithRunLoop ( stream ,[[self runloop]  getCFRunLoop],(__bridge CFStringRef)model);
+    }
+}
+
++ (void) unscheduleWriteStream:(CFWriteStreamRef)stream {
+    for (NSString* model in [self runloopModes]) {
+        CFWriteStreamUnscheduleFromRunLoop( stream ,[[self runloop]  getCFRunLoop],(__bridge CFStringRef)model);
+    }
+}
 @end

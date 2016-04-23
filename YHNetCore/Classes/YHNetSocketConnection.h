@@ -8,7 +8,8 @@
 
 #import <Foundation/Foundation.h>
 
-NS_ENUM(NSInteger, YHNetConnectionFlag) {
+
+typedef NS_ENUM(NSInteger, YHNetConnectionFlag) {
    	kEnablePreBuffering      = 1 <<  0,  // If set, pre-buffering is enabled
     kDidStartDelegate        = 1 <<  1,  // If set, disconnection results in delegate call
     kDidCompleteOpenForRead  = 1 <<  2,  // If set, open callback has been called for read stream
@@ -27,7 +28,28 @@ NS_ENUM(NSInteger, YHNetConnectionFlag) {
 
 @class YHNetCommunicator;
 @class YHEndPoint;
+@class YHSendMessage;
+
+
+@class YHNetSocketConnection;
+@class YHFromMessage;
+@class YHCmd;
+@protocol YHNetSocketConnectionDelegate
+- (void) connectionWillOpen:(YHNetSocketConnection*)connection;
+- (void) connectionDidOpen:(YHNetSocketConnection*)connection;
+- (void) connection:(YHNetSocketConnection*)connection occurError:(NSError*)error;
+- (void) connectionDidClose:(YHNetSocketConnection*)connection;
+- (void) connection:(YHNetSocketConnection*)connection getFromMessage:(YHFromMessage*)message;
+- (void) connection:(YHNetSocketConnection*)connection enqueueSendMessage:(YHSendMessage*)massage;
+- (void) connection:(YHNetSocketConnection*)connection willSendMessage:(YHSendMessage*)message;
+- (void) connection:(YHNetSocketConnection*)connection didSendMessage:(YHSendMessage*)message;
+@end
+
 @interface YHNetSocketConnection : NSObject
-- (instancetype) initWithCommunicator:(YHNetCommunicator*)c;
+@property (nonatomic, weak) NSObject<YHNetSocketConnectionDelegate>* delegate;
+@property (nonatomic, assign, readonly) YHNetConnectionFlag flag;
+@property (nonatomic, assign) NSTimeInterval timeout;
+@property (nonatomic, assign, readonly) BOOL connected;
 - (BOOL) openWithEndPoint:(YHEndPoint *)point error:(NSError* __autoreleasing*) error;
+- (int64_t) sendCMD:(YHCmd*)cmd data:(NSData*)data headers:(NSDictionary*)headers;
 @end
