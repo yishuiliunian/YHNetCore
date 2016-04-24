@@ -25,10 +25,12 @@
 @property (nonatomic, strong) Class responseObjectClass;
 @property (nonatomic, strong) NSString* servant;
 @property (nonatomic, strong) NSString* method;
+@property (nonatomic, assign) NSTimeInterval timeout;
 @end
 
 @interface YHRequest ()
 - (void) willStartRequest;
 - (void) didSendingRequest;
 - (void) reciveRspMessage:(YHFromMessage*)mssage;
+- (void) requestTimeOut;
 @end

@@ -26,6 +26,15 @@ typedef NS_ENUM(NSInteger, YHNetConnectionFlag) {
     kSocketHasBytesAvailable = 1 << 13,  // If set, we know socket has bytes available. If unset, it's unknown.
 };
 
+
+
+typedef NS_ENUM(NSInteger, YHSocketStatus) {
+    YHScketConnected,
+    YHScketDisconnected,
+    YHScketConnecting,
+    YHScketDisconnecting
+};
+
 @class YHNetCommunicator;
 @class YHEndPoint;
 @class YHSendMessage;
@@ -46,10 +55,15 @@ typedef NS_ENUM(NSInteger, YHNetConnectionFlag) {
 @end
 
 @interface YHNetSocketConnection : NSObject
+/**
+ *  the endpoint that opened
+ */
+@property (nonatomic, strong, readonly) YHEndPoint* endPoint;
 @property (nonatomic, weak) NSObject<YHNetSocketConnectionDelegate>* delegate;
 @property (nonatomic, assign, readonly) YHNetConnectionFlag flag;
 @property (nonatomic, assign) NSTimeInterval timeout;
-@property (nonatomic, assign, readonly) BOOL connected;
-- (BOOL) openWithEndPoint:(YHEndPoint *)point error:(NSError* __autoreleasing*) error;
+@property (nonatomic, assign, readonly) YHSocketStatus socketStatus;
+- (instancetype) initWithEndPoint:(YHEndPoint*)point;
+- (BOOL) open:(NSError* __autoreleasing*) error;
 - (int64_t) sendCMD:(YHCmd*)cmd data:(NSData*)data headers:(NSDictionary*)headers;
 @end

@@ -7,9 +7,9 @@
 //
 
 #import <Foundation/Foundation.h>
-
+FOUNDATION_EXTERN int byteToInt2(Byte b[]);
 @interface YHReadBuffer : NSObject
-@property (nonatomic, readonly,assign) int64_t dataLength;
+@property (nonatomic, assign) int64_t dataLength;
 @property (nonatomic, readonly, assign) int64_t reciveDataLength;
 @property (nonatomic, strong, readonly) NSData* bufferData;
 - (void)appendBytes:(const void *)bytes length:(NSUInteger)length;

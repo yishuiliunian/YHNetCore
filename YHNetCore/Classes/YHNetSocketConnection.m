@@ -22,22 +22,36 @@
 #import "NSError+YHNetError.h"
 #import "YHReadBuffer.h"
 
-
-
 @interface YHNetSocketConnection  () <NSStreamDelegate>
 {
+    //read write stream
     NSInputStream* _readStream;
     NSOutputStream* _writeStream;
+    //
     NSTimer* _connectionTimeOutTimer;
+    //sendQueue to cache the sendmessage
     NSMutableArray* _sendQueue;
+    //server data will seperate, use this to join those parts.
     YHReadBuffer* _readBuffer;
+    //
+    BOOL _destry;
+    
 }
 @property (nonatomic, strong) YHEndPoint* endpoint;
 @end
 
+#pragma Retry
+@interface YHNetSocketConnection ()
+{
+    NSInteger _maxRetryCount;
+    NSInteger _currentRetryCount;
+    BOOL _retrying;
+}
+@end
+
 @implementation YHNetSocketConnection
 
-- (instancetype) init
+- (instancetype) initWithEndPoint:(YHEndPoint*)point
 {
     self = [super init];
     if (!self) {
@@ -46,20 +60,35 @@
     _flag = 0;
     _timeout = 40;
     _sendQueue = [NSMutableArray new];
-    _connected = NO;
     _readBuffer = nil;
+    _socketStatus = YHScketDisconnected;
+    //
+    _maxRetryCount = 3;
+    _currentRetryCount = 0;
+    _retrying = NO;
+    _destry = NO;
+    //schedule send message in thread
     [NSThread detachNewThreadSelector:@selector(scheduleSend) toTarget:self withObject:nil];
+    _endPoint = point;
+
     return self;
 }
 
-- (BOOL) openWithEndPoint:(YHEndPoint *)point error:(NSError *__autoreleasing *)error
+- (BOOL) open:(NSError *__autoreleasing *)error
 {
+    
+    //if previous endpoint isEqual the point that will connected , and net connected now then return;
+    if (_socketStatus == YHScketConnected || _socketStatus == YHScketConnecting) {
+            return YES;
+    }
+    
+    _socketStatus = YHScketConnecting;
     if ([self.delegate respondsToSelector:@selector(connectionWillOpen:)]) {
         [self.delegate connectionWillOpen:self];
     }
     CFReadStreamRef  readStream = (__bridge CFReadStreamRef)_readStream;
     CFWriteStreamRef writeStream = (__bridge CFWriteStreamRef)_writeStream;
-    CFStreamCreatePairWithSocketToHost(NULL, (__bridge CFStringRef)point.host, [point.port intValue], &readStream, &writeStream);
+    CFStreamCreatePairWithSocketToHost(NULL, (__bridge CFStringRef)self.endPoint.host, [self.endPoint.port intValue], &readStream, &writeStream);
 
     _readStream = (__bridge NSInputStream *)(readStream);
     _writeStream = (__bridge NSOutputStream*)(writeStream);
@@ -76,6 +105,7 @@
     [_readStream open];
     [_writeStream open];
     
+    //fire open connection timeout
     [_connectionTimeOutTimer invalidate];
     _connectionTimeOutTimer = [NSTimer timerWithTimeInterval:_timeout target:self selector:@selector(commectionTimeOut) userInfo:nil repeats:NO];
     [YHNetRunloop addTimer:_connectionTimeOutTimer];
@@ -103,12 +133,14 @@
 - (void) openSuccess
 {
     [self invalideOpenTimeOut];
+    [self stopRetry];
     if ((_flag & kDidCompleteOpenForRead) && (_flag & kDidCompleteOpenForWrite) ) {
-        _connected =YES;
+        _socketStatus = YHScketConnected;
         if ([self.delegate respondsToSelector:@selector(connectionDidOpen:)]) {
             [self.delegate connectionDidOpen:self];
         }
     }
+    
 }
 
 - (void) stream:(NSStream *)aStream handleEvent:(NSStreamEvent)eventCode
@@ -125,25 +157,59 @@
 - (void) readBytes
 {
     static NSUInteger MaxReadLength = 1024;
-    if (!_readBuffer) {
-        _readBuffer = [YHReadBuffer new];
-    }
     while ([_readStream hasBytesAvailable]) {
-        uint8_t buffer[MaxReadLength];
+        uint8_t *buffer = malloc(sizeof(uint8_t) * MaxReadLength);
         int64_t length =  [_readStream read:buffer maxLength:MaxReadLength];
         if (length < 0) {
             break;
         }
-        [_readBuffer appendBytes:buffer length:length];
+        [self deallWithBuffer:buffer length:length];
+        free(buffer);
     }
-    // if the read buffer is full ,then decode it. Otherwise do nothing , but just wait the next package
-    if (_readBuffer.isFull) {
-        NSData* data = _readBuffer.bufferData;
-        YHFromMessage* msg = [YHCodecWrapper decode:data];
-        if ([self.delegate respondsToSelector:@selector(connection:getFromMessage:)]) {
-            [self.delegate connection:self getFromMessage:msg];
+}
+// you must be so carefully about those lines , the sever transfer data not only sperate package and join package!!, so you need join it and sperate it too.
+- (void) deallWithBuffer:(uint8_t*)buffer length:(int64_t)length
+{
+    
+    void(^CheckFull)(void) = ^(void) {
+        // if the read buffer is full ,then decode it. Otherwise do nothing , but just wait the next package
+        if (_readBuffer.isFull) {
+            NSData* data = _readBuffer.bufferData;
+            YHFromMessage* msg = [YHCodecWrapper decode:data];
+            
+            if ([self.delegate respondsToSelector:@selector(connection:getFromMessage:)]) {
+                [self.delegate connection:self getFromMessage:msg];
+            }
+#ifdef DEBUG
+            NSLog(@"Got From Message %d %@", msg.seq, msg.cmd);
+            NSLog(@"header is %@", msg.headers);
+#endif
+            _readBuffer = nil;
         }
-        _readStream = nil;
+    };
+    
+    uint8_t * readBufferPoint = buffer;
+    uint32_t aimLength = 0;
+    if (!_readBuffer) {
+        _readBuffer = [YHReadBuffer new];
+        aimLength = byteToInt2(buffer);
+        readBufferPoint += 4;
+        aimLength -= 4;
+        length -= 4;
+        _readBuffer.dataLength = aimLength;
+    } else {
+        aimLength = _readBuffer.dataLength;
+    }
+    if (_readBuffer.reciveDataLength + length < aimLength) {
+        [_readBuffer appendBytes:readBufferPoint length:length];
+    } else if (_readBuffer.reciveDataLength + length == aimLength) {
+        [_readBuffer appendBytes:readBufferPoint length:length];
+        CheckFull();
+    } else {
+        int32_t readLength = (aimLength - _readBuffer.reciveDataLength);
+        [_readBuffer appendBytes:readBufferPoint length:readLength];
+        CheckFull();
+        [self deallWithBuffer:readBufferPoint+readLength length:length-readLength];
     }
 }
 
@@ -159,13 +225,11 @@
             break;
         // if error occurred the close the stream and socket;
         case NSStreamEventErrorOccurred:
-            [self closeWithError:nil];
+            [self closeWithError:[stream streamError]];
             break;
         case NSStreamEventEndEncountered:
         case NSStreamEventNone:
-            
             break;
-            
         default:
             break;
     }
@@ -183,7 +247,7 @@
             break;
         // if error occurred the close the stream and socket;
         case NSStreamEventErrorOccurred:
-            [self closeWithError:nil];
+            [self closeWithError:[stream streamError]];
             break;
         default:
             break;
@@ -217,11 +281,11 @@
 
 - (void) scheduleSend
 {
-    while (true) {
+    while (!_destry) {
         @autoreleasepool {
         YHSendMessage* msg = nil;
         for (;;) {
-            if (!_connected) {
+            if (!_socketStatus == YHScketConnected) {
                 break;
             }
             @synchronized (_sendQueue) {
@@ -246,6 +310,9 @@
             if ([self.delegate respondsToSelector:@selector(connection:didSendMessage:)]) {
                 [self.delegate connection:self didSendMessage:msg];
             }
+#ifdef DEBUG
+            NSLog(@"Send Message %d , %@", msg.seq, msg.cmd);
+#endif
             break;
         }
         }
@@ -255,19 +322,78 @@
 
 - (void) closeWithError:(NSError*)error
 {
-    
     [self close];
+    if ([error.domain isEqualToString:NSPOSIXErrorDomain]) {
+        //Socket is not connected
+        if (error.code == 57) {
+            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+                [self startRetry];
+            });
+        }
+    }
 }
 
 - (void) close
 {
     [self invalideOpenTimeOut];
-    [YHNetRunloop unscheduleReadStream:(__bridge CFReadStreamRef)(_readStream)];
-    [YHNetRunloop unscheduleWriteStream:(__bridge CFWriteStreamRef)(_readStream)];
+    if (_readStream) {
+        [YHNetRunloop unscheduleReadStream:(__bridge CFReadStreamRef)(_readStream)];
+    }
+    if (_writeStream) {
+        [YHNetRunloop unscheduleWriteStream:(__bridge CFWriteStreamRef)(_writeStream)];
+    }
     [_writeStream close];
     [_readStream close];
     _flag &= 0x0;
-    _connected = NO;
+    _socketStatus = YHScketDisconnected;
+}
+
+////////////////////////////////////////////////////
+#pragma Retry
+////////////////////////////////////////////////////
+
+- (void) startRetry
+{
+    // it is retrying, so it will not retry untill the previos progress is end
+    if (_retrying) {
+        return;
+    }
+    _retrying =  YES;
+    _currentRetryCount = 0;
+    [self onceTry];
+}
+
+- (void) onceTry
+{
+    if ([self canRetry]) {
+        [self retryAtTimeInterval:4*(2^_currentRetryCount)];
+    }
+}
+
+- (BOOL) canRetry
+{
+    if (_currentRetryCount < _maxRetryCount) {
+        return YES;
+    }
+    return NO;
+}
+
+- (void) retryAtTimeInterval:(NSTimeInterval)timeInterval
+{
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(timeInterval * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        if (!_retrying) {
+            return;
+        }
+        [self open:nil];
+        _currentRetryCount++;
+        [self onceTry];
+    });
+}
+
+- (void) stopRetry
+{
+    _retrying = NO;
+    _currentRetryCount = 0;
 }
 @end
 

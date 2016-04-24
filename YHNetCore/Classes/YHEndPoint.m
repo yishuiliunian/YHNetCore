@@ -26,6 +26,13 @@
     return self;
 }
 
+- (BOOL) isEqual:(YHEndPoint*)object
+{
+    if ([self.host isEqual:object.host] && [self.port isEqual:object.host]) {
+        return YES;
+    }
+    return NO;
+}
 
 - (NSString*) description
 {

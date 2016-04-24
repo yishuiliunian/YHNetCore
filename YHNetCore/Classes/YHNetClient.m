@@ -39,7 +39,8 @@
     if (!self) {
         return self;
     }
-    _connection = [[YHNetSocketConnection alloc] init];
+    YHEndPoint* endP0int = [[YHEndPoint alloc] initWithHost:@"182.254.232.60" port:@"10010"];
+    _connection = [[YHNetSocketConnection alloc] initWithEndPoint:endP0int];
     _connection.delegate = self;
     _requestCache = [NSMutableDictionary new];
     [self open];
@@ -49,10 +50,8 @@
 
 - (void) open
 {
-    YHEndPoint* endP0int = [[YHEndPoint alloc] initWithHost:@"182.254.232.60" port:@"10010"];
     NSError* error;
-    [_connection openWithEndPoint:endP0int error:&error];
-    
+    [_connection open:&error];
 }
 
 
@@ -63,22 +62,41 @@
     @synchronized (_requestCache) {
         _requestCache[@(seq)] = request;
     }
+    if (request.timeout > 0) {
+        __weak typeof(self) weakSelf = self;
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(request.timeout * NSEC_PER_SEC)), dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0), ^{
+            [weakSelf requestTimeOutWithSEQ:seq];
+        });
+    }
 }
 
+
+- (void) requestTimeOutWithSEQ:(int64_t)seq
+{
+    YHRequest* request = [self takeRequestWithSEQ:seq];
+    if (request) {
+        [request requestTimeOut];
+    }
+}
+
+- (YHRequest*) takeRequestWithSEQ:(int64_t)seq
+{
+    YHRequest* request = nil;
+    @synchronized (_requestCache) {
+        request = _requestCache[@(seq)];
+        if (request) {
+            [_requestCache removeObjectForKey:@(seq)];
+        }
+    }
+    return request;
+}
 
 - (void) connection:(YHNetSocketConnection *)connection getFromMessage:(YHFromMessage *)message
 {
     if (connection != _connection) {
         return;
     }
-    YHRequest* request = nil;
-    @synchronized (_requestCache) {
-        request = _requestCache[@(message.seq)];
-        if (request) {
-            [_requestCache removeObjectForKey:@(message.seq)];
-        }
-    }
-    
+    YHRequest* request = [self takeRequestWithSEQ:message.seq];
     if (request) {
         [request reciveRspMessage:message];
     }
