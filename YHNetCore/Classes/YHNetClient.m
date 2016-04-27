@@ -14,11 +14,13 @@
 #import <libkern/OSAtomic.h>
 #import "GPBMessage.h"
 #import "YHFromMessage.h"
-
+#import "YHNetResponseDispatch.h"
+#import "YHPushMessageHanlder.h"
 @interface YHNetClient () <YHNetSocketConnectionDelegate>
 {
     YHNetSocketConnection* _connection;
     NSMutableDictionary* _requestCache;
+    YHNetResponseDispatch* _pushHanlder;
 }
 @end
 
@@ -43,6 +45,8 @@
     _connection = [[YHNetSocketConnection alloc] initWithEndPoint:endP0int];
     _connection.delegate = self;
     _requestCache = [NSMutableDictionary new];
+    _pushHanlder = [YHNetResponseDispatch new];
+    [_pushHanlder registerHandler:[[YHPushMessageHanlder alloc] initWithServant:@"Comm.DispatchServer.PushObj" method:@"rpc.PushService.PushMsg"]];
     [self open];
     return self;
 }
@@ -61,21 +65,6 @@
     int64_t seq = [_connection sendCMD:cmd data:request.requestData.data headers:request.requestHeader];
     @synchronized (_requestCache) {
         _requestCache[@(seq)] = request;
-    }
-    if (request.timeout > 0) {
-        __weak typeof(self) weakSelf = self;
-        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(request.timeout * NSEC_PER_SEC)), dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0), ^{
-            [weakSelf requestTimeOutWithSEQ:seq];
-        });
-    }
-}
-
-
-- (void) requestTimeOutWithSEQ:(int64_t)seq
-{
-    YHRequest* request = [self takeRequestWithSEQ:seq];
-    if (request) {
-        [request requestTimeOut];
     }
 }
 
@@ -99,6 +88,9 @@
     YHRequest* request = [self takeRequestWithSEQ:message.seq];
     if (request) {
         [request reciveRspMessage:message];
+    } else if([_pushHanlder handleFromMessage:message])
+    {
+        NSLog(@"Can't Handler message");
     }
 }
 - (int64_t) sendCMD:(YHCmd*)cmd data:(NSData*)data headers:(NSDictionary*)headers

@@ -14,7 +14,7 @@
 @property (nonatomic, assign) int32_t version;
 @property (nonatomic, strong) NSString* imei;
 @property (nonatomic, assign) int64_t seq;
-@property (nonatomic, strong, readonly) NSDictionary* headers;
+@property (nonatomic, strong) NSDictionary* headers;
 @property (nonatomic, assign) BOOL doOneWay;
 @property (nonatomic, strong) NSData* dataBuffer;
 

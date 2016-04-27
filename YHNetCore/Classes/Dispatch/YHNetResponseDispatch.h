@@ -10,7 +10,9 @@
 
 
 
+@class YHFromMessage;
+@class YHPushHandler;
 @interface YHNetResponseDispatch : NSObject
-
-
+- (void) registerHandler:(YHPushHandler*)handler;
+- (BOOL) handleFromMessage:(YHFromMessage*)message;
 @end

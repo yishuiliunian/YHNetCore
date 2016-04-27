@@ -23,7 +23,6 @@
     if (!self) {
         return self;
     }
-    _allHeaders = [NSMutableDictionary new];
     return self;
 }
 
@@ -38,9 +37,5 @@
     return self;
 }
 
-- (NSDictionary*) headers
-{
-    return [_allHeaders copy];
-}
 
 @end

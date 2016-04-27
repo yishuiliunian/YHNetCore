@@ -17,20 +17,31 @@
 
 @class GPBMessage;
 @interface YHRequest : NSObject
+{
+    @protected
+    GPBMessage* _requestData;
+    Class _responseClass;
+}
 @property (nonatomic, weak) NSObject<YHRequestHandler>* delegate;
-@property (nonatomic, assign) BOOL sending;
+@property (nonatomic, assign, readonly) BOOL requesting;
 @property (nonatomic, assign, readonly) int64_t seq;
-@property (nonatomic, strong, readonly) GPBMessage* requestData;
 @property (nonatomic, strong, readonly) NSDictionary* requestHeader;
-@property (nonatomic, strong) Class responseObjectClass;
-@property (nonatomic, strong) NSString* servant;
-@property (nonatomic, strong) NSString* method;
+@property (nonatomic, strong, readonly) GPBMessage* requestData;
+@property (nonatomic, strong, readonly) NSString* servant;
+@property (nonatomic, strong, readonly) NSString* method;
 @property (nonatomic, assign) NSTimeInterval timeout;
+@property (nonatomic, strong) Class responseObjectClass;
+
+- (void) addHeader:(NSString*)paramter forKey:(NSString*)key;
 @end
 
 @interface YHRequest ()
-- (void) willStartRequest;
-- (void) didSendingRequest;
+- (int64_t) start;
 - (void) reciveRspMessage:(YHFromMessage*)mssage;
-- (void) requestTimeOut;
+@end
+
+
+@interface YHRequest ()
+- (void) onError:(NSError*)error;
+- (void) onNetSuccess:(id)object;
 @end

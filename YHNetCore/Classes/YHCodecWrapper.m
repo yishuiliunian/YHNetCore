@@ -11,6 +11,7 @@
 #import "YHSendMessage.h"
 #import "YHCmd.h"
 #import "YHFromMessage.h"
+#import "NSError+YHNetError.h"
 @implementation YHCodecWrapper
 
 + (NSData*) encode:(YHSendMessage*)message
@@ -28,8 +29,6 @@
         [map setValuesForKeysWithDictionary:message.headers];
     }
     msg.buffer = message.dataBuffer;
-    
-    
     NSData* data = [msg data];
     
     int magicLength = 4;
@@ -41,7 +40,7 @@
     magic[1] = (n >> 16 & 0xff);
     magic[0] = (n >> 24 & 0xff);
     
-    NSMutableData* appendData  = [NSMutableData dataWithBytes:magic length:4];
+    NSMutableData* appendData  = [NSMutableData dataWithBytes:magic length:magicLength];
     [appendData appendData:data];
     return appendData;
 }
@@ -57,6 +56,10 @@
     fromMsg.data = msg.buffer;
     fromMsg.doOneWay = msg.oneway_p;
     fromMsg.headers = msg.context;
+    if (msg.errorCode != 0) {
+        NSError* error = [NSError YH_Error:msg.errorCode reason:msg.reason];
+        fromMsg.error = error;
+    }
     return fromMsg;
 }
 

@@ -265,6 +265,7 @@
     sendMsg.seq = [self getNextSEQ];
     sendMsg.cmd = cmd;
     sendMsg.dataBuffer = data;
+    sendMsg.headers = headers;
     [self sendMessage:sendMsg];
     return sendMsg.seq;
 }
