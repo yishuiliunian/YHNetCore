@@ -10,4 +10,8 @@
 
 @implementation YHPushMessageHanlder
 
+- (void) handleFromMessage:(YHFromMessage *)message
+{
+    
+}
 @end
