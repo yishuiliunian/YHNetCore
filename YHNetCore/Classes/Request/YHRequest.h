@@ -9,10 +9,14 @@
 #import <Foundation/Foundation.h>
 #import "YHFromMessage.h"
 
+typedef void(^YHRequestErrorHandler)(NSError* error);
+typedef void(^YHRequestSuccessHandler)(id object);
+
+
 @class YHRequest;
 @protocol YHRequestHandler<NSObject>
-- (void) request:(YHRequest*)request onError:(NSError*)error;
-- (void) request:(YHRequest *)request onSuccess:(id)object;
+- (void) yh_request:(YHRequest*)request onError:(NSError*)error;
+- (void) yh_request:(YHRequest *)request onSuccess:(id)object;
 @end
 
 @class GPBMessage;
@@ -31,8 +35,13 @@
 @property (nonatomic, strong, readonly) NSString* method;
 @property (nonatomic, assign) NSTimeInterval timeout;
 @property (nonatomic, strong) Class responseObjectClass;
+@property (nonatomic, strong) (void)(^)(NSError* error) errorHandler ;
+@property (nonatomic, strong) YHRequestSuccessHandler successHanlder;
 
 - (void) addHeader:(NSString*)paramter forKey:(NSString*)key;
+
+- (void) notifyResponseError:(NSError*)error;
+- (void) notifyResponseSuccess:(id)object;
 @end
 
 @interface YHRequest ()

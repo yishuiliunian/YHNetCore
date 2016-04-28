@@ -58,16 +58,39 @@
     [self onError:[NSError YH_Error:kYHNetErrorTimeOut reason:@"服务好长时间没反应，跑路了？"]];
 }
 
+- (void) notifyResponseError:(NSError*)error
+{
+    if ([self.delegate respondsToSelector:@selector(yh_request:onError:)]) {
+        [self.delegate yh_request:self onError:error];
+    }
+    
+    if (self.errorHandler) {
+        self.errorHandler(error);
+    }
+}
+
+- (void) notifyResponseSuccess:(id)object
+{
+    if ([self.delegate respondsToSelector:@selector(yh_request:onSuccess:)]) {
+        [self.delegate yh_request:self onSuccess:object];
+    }
+    
+    if (self.successHanlder) {
+        self.successHanlder(object);
+    }
+}
 - (void) onError:(NSError*)error
 {
     [self invalidTimeOut];
     [self endRequest];
+    [self notifyResponseError:error];
 }
 
 - (void) onNetSuccess:(id)object
 {
     [self invalidTimeOut];
     [self endRequest];
+    [self onNetSuccess:object];
 }
 
 - (void) reciveRspMessage:(YHFromMessage *)message
