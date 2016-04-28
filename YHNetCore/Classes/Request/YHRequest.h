@@ -9,9 +9,6 @@
 #import <Foundation/Foundation.h>
 #import "YHFromMessage.h"
 
-typedef void(^YHRequestErrorHandler)(NSError* error);
-typedef void(^YHRequestSuccessHandler)(id object);
-
 
 @class YHRequest;
 @protocol YHRequestHandler<NSObject>
@@ -35,8 +32,8 @@ typedef void(^YHRequestSuccessHandler)(id object);
 @property (nonatomic, strong, readonly) NSString* method;
 @property (nonatomic, assign) NSTimeInterval timeout;
 @property (nonatomic, strong) Class responseObjectClass;
-@property (nonatomic, strong) (void)(^)(NSError* error) errorHandler ;
-@property (nonatomic, strong) YHRequestSuccessHandler successHanlder;
+@property (nonatomic, strong) void(^errorHandler)(NSError* error)  ;
+@property (nonatomic, strong) void(^successHanlder) (id object);
 
 - (void) addHeader:(NSString*)paramter forKey:(NSString*)key;
 
