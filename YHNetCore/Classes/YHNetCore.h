@@ -9,5 +9,6 @@
 #ifndef YHNetCore_h
 #define YHNetCore_h
 
+#import "YHRequest.h"
 
 #endif /* YHNetCore_h */

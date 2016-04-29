@@ -60,24 +60,31 @@
 
 - (void) notifyResponseError:(NSError*)error
 {
-    if ([self.delegate respondsToSelector:@selector(yh_request:onError:)]) {
-        [self.delegate yh_request:self onError:error];
-    }
-    
-    if (self.errorHandler) {
-        self.errorHandler(error);
-    }
+    dispatch_sync(dispatch_get_main_queue(), ^{
+
+        if ([self.delegate respondsToSelector:@selector(yh_request:onError:)]) {
+            [self.delegate yh_request:self onError:error];
+        }
+        
+        if (self.errorHandler) {
+            self.errorHandler(error);
+        }
+        
+    });
 }
 
 - (void) notifyResponseSuccess:(id)object
 {
-    if ([self.delegate respondsToSelector:@selector(yh_request:onSuccess:)]) {
-        [self.delegate yh_request:self onSuccess:object];
-    }
-    
-    if (self.successHanlder) {
-        self.successHanlder(object);
-    }
+    dispatch_sync(dispatch_get_main_queue(), ^{
+        if ([self.delegate respondsToSelector:@selector(yh_request:onSuccess:)]) {
+            [self.delegate yh_request:self onSuccess:object];
+        }
+        
+        if (self.successHanlder) {
+            self.successHanlder(object);
+        }
+    });
+
 }
 - (void) onError:(NSError*)error
 {
@@ -90,7 +97,7 @@
 {
     [self invalidTimeOut];
     [self endRequest];
-    [self onNetSuccess:object];
+    [self notifyResponseSuccess:object];
 }
 
 - (void) reciveRspMessage:(YHFromMessage *)message
@@ -120,4 +127,6 @@
 - (void) endRequest {
     _requesting = NO;
 }
+
+
 @end
