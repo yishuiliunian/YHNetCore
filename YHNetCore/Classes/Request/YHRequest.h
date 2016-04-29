@@ -8,7 +8,7 @@
 
 #import <Foundation/Foundation.h>
 #import "YHFromMessage.h"
-
+#import <YHProtoBuff/RpcLoginMessage.pbobjc.h>
 
 @class YHRequest;
 @protocol YHRequestHandler<NSObject>
