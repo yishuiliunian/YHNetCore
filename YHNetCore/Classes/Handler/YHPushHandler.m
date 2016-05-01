@@ -36,7 +36,7 @@
 - (void) handleFromMessage:(YHFromMessage*)message
 {
     NSError* error = nil;
-    PushMsg* msg = [PushMsg parseFromData:message.data error:&error];
+    Msg* msg = [Msg parseFromData:message.data error:&error];
     
 }
 @end

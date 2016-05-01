@@ -10,5 +10,6 @@
 #define YHNetCore_h
 
 #import "YHRequest.h"
+#import "YHAuthedRequest.h"
 
 #endif /* YHNetCore_h */

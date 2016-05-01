@@ -160,7 +160,7 @@
     while ([_readStream hasBytesAvailable]) {
         uint8_t *buffer = malloc(sizeof(uint8_t) * MaxReadLength);
         int64_t length =  [_readStream read:buffer maxLength:MaxReadLength];
-        if (length < 0) {
+        if (length <= 0) {
             break;
         }
         [self deallWithBuffer:buffer length:length];
