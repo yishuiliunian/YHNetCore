@@ -9,5 +9,5 @@
 #import <Foundation/Foundation.h>
 
 @interface YHHearterService : NSObject
-
+- (void) connectionUsedWithUID:(NSString*)uid skey:(NSString*)skey;
 @end

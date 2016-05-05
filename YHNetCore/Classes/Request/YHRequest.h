@@ -30,6 +30,7 @@
 @property (nonatomic, strong, readonly) GPBMessage* requestData;
 @property (nonatomic, strong, readonly) NSString* servant;
 @property (nonatomic, strong, readonly) NSString* method;
+@property (nonatomic, assign) BOOL b_oneway;
 @property (nonatomic, assign) NSTimeInterval timeout;
 @property (nonatomic, strong) Class responseObjectClass;
 @property (nonatomic, strong) void(^errorHandler)(NSError* error)  ;

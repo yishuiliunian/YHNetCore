@@ -1,44 +1,55 @@
 //
-//  YHPushMessageHanlder.m
+//  YHSyncMsgRequest.m
 //  Pods
 //
-//  Created by stonedong on 16/4/27.
+//  Created by stonedong on 16/5/3.
 //
 //
 
-#import "YHPushMessageHanlder.h"
+#import "YHSyncMsgRequest.h"
 #import "YHCoreDB.h"
 #import "DZAuthSession.h"
 #import "YHAcquirRequest.h"
-@implementation YHPushMessageHanlder
+
+@implementation YHSyncMsgRequest
+
 - (instancetype) init
 {
     self = [super init];
     if (!self) {
         return self;
     }
-    _responseClass = [PushMsgRequest class];
+    _responseClass = [SyncMsgResponse class];
     return self;
 }
+
 - (NSString*) method
 {
-    return @"rpc.PushService.PushMsg";
+    return @"rpc.MsgService.SyncMsg";
 }
+
 
 - (NSString*) servant
 {
-    return @"Comm.DispatchServer.PushObj";
+    return @"Comm.MsgServer.MsgObj";
 }
 
-- (void) onHandleError:(NSError *)error
+- (SyncMsgRequest*) syncMsg
 {
-    
+    if (!_requestData) {
+        _requestData = [SyncMsgRequest new];
+    }
+    return  (SyncMsgRequest*) _requestData;
 }
 
-- (void) onHandleObject:(PushMsgRequest*)object
+- (void) onError:(NSError *)error
+{
+    [super onError:error];
+}
+- (void) onNetSuccess:(SyncMsgResponse*)object
 {
     NSString* uid = DZActiveAuthSession.userID;
-    
+   
     RLMRealm* realm = YHDBConnectionWithUID(uid);
     
     [realm beginWriteTransaction];
@@ -62,7 +73,7 @@
         [realm addOrUpdateObject:message];
     }
     [realm commitWriteTransaction];
-    
+    [super onNetSuccess:object];
     
     
     YHAcquirRequest* req = [YHAcquirRequest new];
@@ -71,5 +82,4 @@
     req.skey = DZActiveAuthSession.token;
     [req start];
 }
-
 @end

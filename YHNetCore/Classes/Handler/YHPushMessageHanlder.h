@@ -7,7 +7,8 @@
 //
 
 #import "YHPushHandler.h"
-
+#import "RpcMsgMessage.pbobjc.h"
+#import "RpcPushMessage.pbobjc.h"
 @interface YHPushMessageHanlder : YHPushHandler
 
 @end

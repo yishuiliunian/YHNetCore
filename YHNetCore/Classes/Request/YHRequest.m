@@ -28,6 +28,7 @@
     }
     _timeout = 60;
     _allHeaders = [NSMutableDictionary new];
+    _b_oneway = NO;
     return self;
 }
 

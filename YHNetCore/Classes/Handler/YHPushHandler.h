@@ -11,9 +11,15 @@
 @class YHCmd;
 @class YHFromMessage;
 @interface YHPushHandler : NSObject
+{
+    Class _responseClass;
+}
 @property (nonatomic, strong, readonly) NSString* servant;
 @property (nonatomic, strong, readonly) NSString* method;
-- (instancetype) initWithServant:(NSString*)servant method:(NSString*)method;
 - (BOOL) canHanldCmd:(YHCmd*)cmd;
 - (void) handleFromMessage:(YHFromMessage*)message;
+
+
+- (void) onHandleObject:(id)object;
+- (void) onHandleError:(NSError*)error;
 @end

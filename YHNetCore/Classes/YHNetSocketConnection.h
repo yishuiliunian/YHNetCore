@@ -65,5 +65,6 @@ typedef NS_ENUM(NSInteger, YHSocketStatus) {
 @property (nonatomic, assign, readonly) YHSocketStatus socketStatus;
 - (instancetype) initWithEndPoint:(YHEndPoint*)point;
 - (BOOL) open:(NSError* __autoreleasing*) error;
-- (int64_t) sendCMD:(YHCmd*)cmd data:(NSData*)data headers:(NSDictionary*)headers;
+- (YHSendMessage*) messageWithCMD:(YHCmd *)cmd data:(NSData *)data headers:(NSDictionary *)headers;
+- (void) sendMessage:(YHSendMessage *)message;
 @end

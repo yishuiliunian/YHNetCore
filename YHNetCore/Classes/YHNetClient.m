@@ -16,11 +16,16 @@
 #import "YHFromMessage.h"
 #import "YHNetResponseDispatch.h"
 #import "YHPushMessageHanlder.h"
+#import "YHHearterService.h"
+#import "YHPushNotifyHandler.h"
+
+
 @interface YHNetClient () <YHNetSocketConnectionDelegate>
 {
     YHNetSocketConnection* _connection;
     NSMutableDictionary* _requestCache;
     YHNetResponseDispatch* _pushHanlder;
+    YHHearterService* _heaterService;
 }
 @end
 
@@ -45,8 +50,14 @@
     _connection = [[YHNetSocketConnection alloc] initWithEndPoint:endP0int];
     _connection.delegate = self;
     _requestCache = [NSMutableDictionary new];
+    //
+    _heaterService = [YHHearterService new];
+    //
     _pushHanlder = [YHNetResponseDispatch new];
-    [_pushHanlder registerHandler:[[YHPushMessageHanlder alloc] initWithServant:@"Comm.DispatchServer.PushObj" method:@"rpc.PushService.PushMsg"]];
+    [_pushHanlder registerHandler:[[YHPushMessageHanlder alloc] init]];
+    [_pushHanlder registerHandler:[YHPushNotifyHandler new]];
+    
+     
     [self open];
     return self;
 }
@@ -62,10 +73,12 @@
 - (void) performRequest:(YHRequest *)request
 {
     YHCmd* cmd = [YHCmd cmdWithServant:request.servant method:request.method];
-    int64_t seq = [_connection sendCMD:cmd data:request.requestData.data headers:request.requestHeader];
+    YHSendMessage* msg = [_connection messageWithCMD:cmd data:request.requestData.data headers:request.requestHeader];
+    msg.doOneWay = request.b_oneway;
     @synchronized (_requestCache) {
-        _requestCache[@(seq)] = request;
+        _requestCache[@(msg.seq)] = request;
     }
+    [_connection sendMessage:msg];
 }
 
 - (YHRequest*) takeRequestWithSEQ:(int64_t)seq
@@ -85,17 +98,21 @@
     if (connection != _connection) {
         return;
     }
+    NSString* skey = message.headers[@"skey"];
+    NSString* uid = message.headers[@"uid"];
+    if (skey && uid) {
+        [_heaterService connectionUsedWithUID:uid skey:skey];
+    }
+    
     YHRequest* request = [self takeRequestWithSEQ:message.seq];
     if (request) {
         [request reciveRspMessage:message];
-    } else if([_pushHanlder handleFromMessage:message])
+    }
+    else if([_pushHanlder handleFromMessage:message])
     {
         NSLog(@"Can't Handler message");
     }
 }
-- (int64_t) sendCMD:(YHCmd*)cmd data:(NSData*)data headers:(NSDictionary*)headers
-{
-    return[_connection sendCMD:cmd data:data headers:headers];
-}
+
 
 @end

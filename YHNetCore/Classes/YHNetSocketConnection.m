@@ -171,6 +171,9 @@
 - (void) deallWithBuffer:(uint8_t*)buffer length:(int64_t)length
 {
     
+    if (length == NSNotFound) {
+        return;
+    }
     void(^CheckFull)(void) = ^(void) {
         // if the read buffer is full ,then decode it. Otherwise do nothing , but just wait the next package
         if (_readBuffer.isFull) {
@@ -259,15 +262,15 @@
     OSAtomicIncrement64(&YHGlobalMessageSendSEQ);
     return YHGlobalMessageSendSEQ;
 }
-- (int64_t) sendCMD:(YHCmd *)cmd data:(NSData *)data headers:(NSDictionary *)headers
+
+- (YHSendMessage*) messageWithCMD:(YHCmd *)cmd data:(NSData *)data headers:(NSDictionary *)headers
 {
     YHSendMessage* sendMsg = [YHSendMessage new];
     sendMsg.seq = [self getNextSEQ];
     sendMsg.cmd = cmd;
     sendMsg.dataBuffer = data;
     sendMsg.headers = headers;
-    [self sendMessage:sendMsg];
-    return sendMsg.seq;
+    return sendMsg;
 }
 
 - (void) sendMessage:(YHSendMessage *)message

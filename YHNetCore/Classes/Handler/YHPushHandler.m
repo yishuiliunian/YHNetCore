@@ -33,10 +33,24 @@
     return YES;
 }
 
+- (void) onHandleObject:(id)object
+{
+    
+}
+- (void) onHandleError:(NSError*)error
+{
+    
+}
 - (void) handleFromMessage:(YHFromMessage*)message
 {
     NSError* error = nil;
-    Msg* msg = [Msg parseFromData:message.data error:&error];
+    id msg = [_responseClass parseFromData:message.data error:&error];
+    if (!error) {
+        [self onHandleObject:msg];
+    } else
+    {
+        [self onHandleError:error];
+    }
     
 }
 @end
