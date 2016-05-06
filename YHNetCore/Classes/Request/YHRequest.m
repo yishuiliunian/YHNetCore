@@ -10,6 +10,7 @@
 #import "NSError+YHNetError.h"
 #import "YHNetClient.h"
 #import "RpcLoginMessage.pbobjc.h"
+#import "RpcMessage.pbobjc.h"
 @interface YHRequest ()
 {
     NSTimer* _timer;
@@ -29,6 +30,7 @@
     _timeout = 60;
     _allHeaders = [NSMutableDictionary new];
     _b_oneway = NO;
+    _responseClass = [SimpleResponse class];
     return self;
 }
 
@@ -107,7 +109,12 @@
         [self onError:message.error];
     } else {
         NSError* error;
-        LoginResponse* rsp  = [_responseClass parseFromData:message.data error:&error];
+        LoginResponse*  rsp  = [_responseClass parseFromData:message.data error:&error];
+        if ([rsp respondsToSelector:@selector(reason)] && [rsp respondsToSelector:@selector(result)]) {
+            if (rsp.result != 0) {
+                error = [NSError YH_Error:rsp.result reason:rsp.reason];
+            }
+        }
         if (error) {
             [self onError:error];
         } else {

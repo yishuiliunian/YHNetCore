@@ -37,28 +37,8 @@
 
 - (void) onHandleObject:(PushMsgRequest*)object
 {
-    NSMutableArray* objects = [NSMutableArray new];
-    for (Msg* msg  in object.msgArray) {
-        YHMessage* message = [YHActiveDBConnection messageWithSeqID:msg.msgId];
-        if (!message) {
-            message = [YHMessage new];
-            message.msgID = YHActiveDBConnection.genNextMsgId;
-        }
-        message.seqID = msg.msgId;
-        message.msgStatus = MsgStatus_Delivered;
-        message.isRead = NO;
-        message.extention  = msg.msgExt;
-        message.data = msg.msgBody;
-        message.createTime = msg.createTime;
-        message.type = msg.msgType;
-        message.fromAccount = msg.fromUserName;
-        message.fromType = msg.fromUserType;
-        message.toAccount = msg.toUserName;
-        message.toType = msg.toUserType;
-        [objects addObject:message];
-    }
-    [YHActiveDBConnection updateObjects:objects];
-    
+ 
+    [YHActiveDBConnection updateMessagesFromServer:object.msgArray];
     
     
     YHAcquirRequest* req = [YHAcquirRequest new];
