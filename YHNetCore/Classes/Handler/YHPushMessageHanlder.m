@@ -37,16 +37,12 @@
 
 - (void) onHandleObject:(PushMsgRequest*)object
 {
-    NSString* uid = DZActiveAuthSession.userID;
-    
-    RLMRealm* realm = YHDBConnectionWithUID(uid);
-    
-    [realm beginWriteTransaction];
+    NSMutableArray* objects = [NSMutableArray new];
     for (Msg* msg  in object.msgArray) {
-        YHMessage* message = [YHMessage objectInRealm:realm forPrimaryKey:@(msg.msgId)];
+        YHMessage* message = [YHActiveDBConnection messageWithSeqID:msg.msgId];
         if (!message) {
             message = [YHMessage new];
-            message.msgID = msg.msgId;
+            message.msgID = YHActiveDBConnection.genNextMsgId;
         }
         message.seqID = msg.msgId;
         message.msgStatus = MsgStatus_Delivered;
@@ -59,9 +55,9 @@
         message.fromType = msg.fromUserType;
         message.toAccount = msg.toUserName;
         message.toType = msg.toUserType;
-        [realm addOrUpdateObject:message];
+        [objects addObject:message];
     }
-    [realm commitWriteTransaction];
+    [YHActiveDBConnection updateObjects:objects];
     
     
     
