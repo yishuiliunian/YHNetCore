@@ -10,7 +10,7 @@
 #import "YHCoreDB.h"
 #import "DZAuthSession.h"
 #import "YHAcquirRequest.h"
-
+#import "YHNetNotification.h"
 @implementation YHSyncMsgRequest
 
 - (instancetype) init
@@ -48,7 +48,14 @@
 }
 - (void) onNetSuccess:(SyncMsgResponse*)object
 {
-    [YHActiveDBConnection updateMessagesFromServer:object.msgArray];
+    
+    NSArray* messages = [YHActiveDBConnection updateMessagesFromServer:object.msgArray];
+    if (messages.count) {
+        DZPostNewServerMessage(@{
+                                 @"messages":messages,
+                                 });
+    }
+    
     [super onNetSuccess:object];
     
     YHAcquirRequest* req = [YHAcquirRequest new];

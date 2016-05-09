@@ -10,6 +10,7 @@
 #import "YHCoreDB.h"
 #import "DZAuthSession.h"
 #import "YHAcquirRequest.h"
+#import "YHNetNotification.h"
 @implementation YHPushMessageHanlder
 - (instancetype) init
 {
@@ -37,9 +38,14 @@
 
 - (void) onHandleObject:(PushMsgRequest*)object
 {
+  
+   NSArray* messages = [YHActiveDBConnection updateMessagesFromServer:object.msgArray];
  
-    [YHActiveDBConnection updateMessagesFromServer:object.msgArray];
-    
+    if (messages.count) {
+        DZPostNewServerMessage(@{
+                                 @"messages":messages,
+                                 });
+    }
     
     YHAcquirRequest* req = [YHAcquirRequest new];
     req.acquire.cookieId = object.cookieId;

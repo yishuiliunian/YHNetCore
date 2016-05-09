@@ -11,5 +11,6 @@
 
 #import "YHRequest.h"
 #import "YHAuthedRequest.h"
+#import "YHNetNotification.h"
 
 #endif /* YHNetCore_h */
