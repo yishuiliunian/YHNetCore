@@ -18,6 +18,7 @@ Pod::Spec.new do |s|
 #   * Finally, don't worry about the indent, CocoaPods strips it!
 
   s.description      = <<-DESC
+s:
                        DESC
 
   s.homepage         = "https://github.com/<GITHUB_USERNAME>/YHNetCore"
@@ -39,4 +40,5 @@ Pod::Spec.new do |s|
   s.dependency 'YHProtoBuff'
   s.dependency 'DZAuthSession'
   s.dependency 'YHCoreDB'
+  s.dependency 'DZProgrameDefines'
 end
