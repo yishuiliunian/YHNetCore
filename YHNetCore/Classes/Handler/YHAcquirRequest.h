@@ -7,8 +7,8 @@
 //
 
 #import <YHNetCore/YHNetCore.h>
-#import "RpcMsgMessage.pbobjc.h"
-#import "RpcPushMessage.pbobjc.h"
+#import <YHProtoBuff/RpcMsgMessage.pbobjc.h>
+#import <YHProtoBuff/RpcPushMessage.pbobjc.h>
 @interface YHAcquirRequest : YHAuthedRequest
 @property (nonatomic, strong,readonly) AcquireRequest* acquire;
 @end
