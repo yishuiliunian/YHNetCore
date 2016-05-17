@@ -25,7 +25,6 @@
     YHNetSocketConnection* _connection;
     NSMutableDictionary* _requestCache;
     YHNetResponseDispatch* _pushHanlder;
-    YHHearterService* _heaterService;
 }
 @end
 
@@ -51,7 +50,6 @@
     _connection.delegate = self;
     _requestCache = [NSMutableDictionary new];
     //
-    _heaterService = [YHHearterService new];
     //
     _pushHanlder = [YHNetResponseDispatch new];
     [_pushHanlder registerHandler:[[YHPushMessageHanlder alloc] init]];
@@ -98,11 +96,7 @@
     if (connection != _connection) {
         return;
     }
-    NSString* skey = message.headers[@"skey"];
-    NSString* uid = message.headers[@"uid"];
-    if (skey && uid) {
-        [_heaterService connectionUsedWithUID:uid skey:skey];
-    }
+
     
     YHRequest* request = [self takeRequestWithSEQ:message.seq];
     if (request) {

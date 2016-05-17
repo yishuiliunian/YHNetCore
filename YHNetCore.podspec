@@ -41,4 +41,6 @@ s:
   s.dependency 'DZAuthSession'
   s.dependency 'YHCoreDB'
   s.dependency 'DZProgrameDefines'
+  s.dependency 'TransitionKit'
+  s.dependency 'Reachability'
 end

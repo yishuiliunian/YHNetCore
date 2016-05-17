@@ -21,7 +21,27 @@
 #import "YHFromMessage.h"
 #import "NSError+YHNetError.h"
 #import "YHReadBuffer.h"
+#import <TransitionKit/TransitionKit.h>
+#import "YHHeartRequest.h"
+#import "DZAuthSession.h"
+static NSString* const kKAActive= @"kKAActive";
+static NSString* const kKAIdle = @"kKAIdle";
 
+
+static NSString* const kKAEventBeating = @"kKAEventBeating";
+static NSString* const kKAEventStopBeating = @"kKAEventStopBeating";
+
+@interface YHNetSocketConnection ()
+{
+    NSTimer* _keepAliveTimer;
+    TKStateMachine* _keepAliveMechine;
+    NSString* _userID;
+    NSString* _skey;
+}
+@property (nonatomic, strong)   TKStateMachine* keepAliveMechine;
+@end
+
+#pragma --normal
 @interface YHNetSocketConnection  () <NSStreamDelegate>
 {
     //read write stream
@@ -35,7 +55,8 @@
     YHReadBuffer* _readBuffer;
     //
     BOOL _destry;
-    
+   //
+    TKStateMachine* _stateMachine;
 }
 @property (nonatomic, strong) YHEndPoint* endpoint;
 @end
@@ -50,6 +71,105 @@
 @end
 
 @implementation YHNetSocketConnection
+
+
+static NSString* const kStateConnected = @"connected";
+static NSString* const kStateDisConnected = @"disconnected";
+static NSString* const kStateError = @"error";
+static NSString* const kStateConnecting= @"connecting";
+
+
+static NSString* const kEventConnect = @"conncte";
+static NSString* const kEventConnected = @"kEventConnected";
+static NSString* const kEventErrorOccur= @"kEventErrorOccur";
+static NSString* const kEventDisconnection= @"kEventDisconnection";
+
+
+- (void) installStateMachine
+{
+    _stateMachine = [TKStateMachine new];
+    
+    TKState* connectionState = [TKState stateWithName:kStateConnected];
+    TKState* errorState = [TKState stateWithName:kStateError];
+    TKState* connectingState = [TKState stateWithName:kStateConnecting];
+    TKState* disconnectionState = [TKState stateWithName:kStateDisConnected];
+    
+    TKEvent* connectingEvent = [TKEvent eventWithName:kEventConnect transitioningFromStates:@[disconnectionState, errorState] toState:connectingState];
+    TKEvent* connectedEvent = [TKEvent eventWithName:kEventConnected transitioningFromStates:@[connectingState] toState:connectionState];
+    TKEvent* errorEvent = [TKEvent eventWithName:kEventErrorOccur transitioningFromStates:@[connectingState, connectionState] toState:errorState];
+    TKEvent* disconnectionEvent = [TKEvent eventWithName:kEventDisconnection transitioningFromStates:@[errorState] toState:disconnectionState];
+    
+    [_stateMachine addStates:@[connectionState, errorState, connectingState, disconnectionState]];
+    [_stateMachine addEvents:@[connectedEvent, disconnectionEvent, errorEvent, connectingEvent]];
+    [_stateMachine setInitialState:disconnectionState];
+    
+    
+    __weak typeof(self) wSelf = self;
+    
+    [connectingState setDidEnterStateBlock:^(TKState *state, TKTransition *transition) {
+        [wSelf startConnecting];
+    }];
+    
+    [errorState setDidEnterStateBlock:^(TKState *state, TKTransition *transition) {
+        [wSelf enterErrorState:transition.userInfo];
+    }];
+    
+    [connectionState setDidEnterStateBlock:^(TKState *state, TKTransition *transition) {
+        [wSelf socketConnected];
+        [wSelf.keepAliveMechine fireEvent:kKAEventBeating userInfo:nil error:nil];
+    }];
+    
+    [connectionState setDidExitStateBlock:^(TKState *state, TKTransition *transition) {
+        [wSelf.keepAliveMechine fireEvent:kKAEventStopBeating userInfo:nil error:nil];
+    }];
+    
+    [disconnectionState setDidEnterStateBlock:^(TKState *state, TKTransition *transition) {
+        [wSelf didDisconnection:transition.userInfo];
+    }];
+}
+
+- (void) didDisconnection:(NSDictionary*)userInfo
+{
+    NSError* error = userInfo[@"error"];
+    if (error) {
+        if ([self.delegate respondsToSelector:@selector(connection:occurError:)]) {
+            [self.delegate connection:self occurError:error];
+        }
+    }
+    _socketStatus = YHScketDisconnected;
+}
+- (void) socketConnected
+{
+    _socketStatus = YHScketConnected;
+    if ([self.delegate respondsToSelector:@selector(connectionDidOpen:)]) {
+        [self.delegate connectionDidOpen:self];
+    }
+}
+
+- (void) startConnecting
+{
+    NSError* error;
+    [self openConnection:&error];
+    _socketStatus = YHScketConnecting;
+}
+
+- (void) enterErrorState:(NSDictionary*) userInfo
+{
+    [self close];
+    NSError* error = userInfo[@"error"];
+    if (error.code == kYHNetErrorTimeOut) {
+        [_stateMachine fireEvent:kEventDisconnection userInfo:userInfo error:nil];
+    } else {
+        if ([error.domain isEqualToString:NSPOSIXErrorDomain]) {
+            //Socket is not connected
+            if (error.code == 57) {
+                dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+                    [_stateMachine fireEvent:kEventConnect userInfo:nil error:nil];
+                });
+            }
+        }
+    }
+}
 
 - (instancetype) initWithEndPoint:(YHEndPoint*)point
 {
@@ -70,16 +190,22 @@
     //schedule send message in thread
     [NSThread detachNewThreadSelector:@selector(scheduleSend) toTarget:self withObject:nil];
     _endPoint = point;
-
+    [self installStateMachine];
+    [self installKeepAliveMachie];
     return self;
 }
 
-- (BOOL) open:(NSError *__autoreleasing *)error
+- (BOOL)open:(NSError *__autoreleasing *)error
+{
+    return  [_stateMachine fireEvent:kEventConnect userInfo:nil error:error];
+}
+
+- (BOOL) openConnection:(NSError *__autoreleasing *)error
 {
     
     //if previous endpoint isEqual the point that will connected , and net connected now then return;
     if (_socketStatus == YHScketConnected || _socketStatus == YHScketConnecting) {
-            return YES;
+        return YES;
     }
     
     _socketStatus = YHScketConnecting;
@@ -109,18 +235,14 @@
     [_connectionTimeOutTimer invalidate];
     _connectionTimeOutTimer = [NSTimer timerWithTimeInterval:_timeout target:self selector:@selector(commectionTimeOut) userInfo:nil repeats:NO];
     [YHNetRunloop addTimer:_connectionTimeOutTimer];
-    [_connectionTimeOutTimer fire];
     return YES;
 }
 
 - (void) commectionTimeOut
 {
-    if ([self.delegate respondsToSelector:@selector(connection:occurError:)]) {
-        NSError* error = [NSError YH_Error:kCFSocketTimeout reason:@"链接服务器超时，服务器跑路了！"];
-        [self.delegate connection:self occurError:error];
-    }
+    NSError* error = [NSError YH_Error:kCFSocketTimeout reason:@"链接服务器超时，服务器跑路了！"];
+    [_stateMachine fireEvent:kEventErrorOccur userInfo:@{@"error":error} error:nil];
     [self invalideOpenTimeOut];
-    
 }
 
 - (void) invalideOpenTimeOut
@@ -135,12 +257,10 @@
     [self invalideOpenTimeOut];
     [self stopRetry];
     if ((_flag & kDidCompleteOpenForRead) && (_flag & kDidCompleteOpenForWrite) ) {
-        _socketStatus = YHScketConnected;
-        if ([self.delegate respondsToSelector:@selector(connectionDidOpen:)]) {
-            [self.delegate connectionDidOpen:self];
-        }
+        [_stateMachine fireEvent:kEventConnected userInfo:nil error:nil];
+
     }
-    
+
 }
 
 - (void) stream:(NSStream *)aStream handleEvent:(NSStreamEvent)eventCode
@@ -180,6 +300,11 @@
             NSData* data = _readBuffer.bufferData;
             YHFromMessage* msg = [YHCodecWrapper decode:data];
             
+            NSString* skey = msg.headers[@"skey"];
+            NSString* uid = msg.headers[@"uid"];
+            if (skey) {
+                _skey = skey;
+            }
             if ([self.delegate respondsToSelector:@selector(connection:getFromMessage:)]) {
                 [self.delegate connection:self getFromMessage:msg];
             }
@@ -246,7 +371,6 @@
             [self openSuccess];
             break;
         case NSStreamEventHasSpaceAvailable:
-        
             break;
         // if error occurred the close the stream and socket;
         case NSStreamEventErrorOccurred:
@@ -326,15 +450,9 @@
 
 - (void) closeWithError:(NSError*)error
 {
-    [self close];
-    if ([error.domain isEqualToString:NSPOSIXErrorDomain]) {
-        //Socket is not connected
-        if (error.code == 57) {
-            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-                [self startRetry];
-            });
-        }
-    }
+    
+    [_stateMachine fireEvent:kEventErrorOccur userInfo:@{@"error":error} error:nil];
+
 }
 
 - (void) close
@@ -398,6 +516,65 @@
 {
     _retrying = NO;
     _currentRetryCount = 0;
+}
+
+
+#pragma KeepAlive
+
+
+- (void) installKeepAliveMachie
+{
+    _keepAliveMechine = [TKStateMachine new];
+    
+    TKState* activeState = [TKState stateWithName:kKAActive];
+    TKState* idleState = [TKState stateWithName:kKAIdle];
+    
+   
+    TKEvent* beatEvent =[TKEvent eventWithName:kKAEventBeating transitioningFromStates:@[idleState] toState:activeState];
+    TKEvent* idleEvent = [TKEvent eventWithName:kKAEventStopBeating transitioningFromStates:@[activeState] toState:idleState];
+    
+    [_keepAliveMechine addStates:@[activeState, idleState]];
+    [_keepAliveMechine addEvents:@[beatEvent, idleEvent]];
+    
+    [_keepAliveMechine setInitialState:idleState];
+    
+    __weak typeof(self) wSelf = self;
+    [activeState setDidEnterStateBlock:^(TKState *state, TKTransition *transition) {
+        [wSelf startBeating];
+    }];
+    
+    [activeState setDidExitStateBlock:^(TKState *state, TKTransition *transition) {
+        [wSelf stopBeating];
+    }];
+    
+    
+    _userID = DZActiveAuthSession.userID;
+    _skey = DZActiveAuthSession.token;
+}
+
+- (void) startBeating
+{
+    _keepAliveTimer = [NSTimer timerWithTimeInterval:60*4 target:self selector:@selector(beating) userInfo:nil repeats:YES];
+    [YHNetRunloop addTimer:_keepAliveTimer];
+    [_keepAliveTimer fire];
+}
+
+- (void) beating{
+    if (!_skey || !DZActiveAuthSession.userID) {
+        return;
+    }
+    YHHeartRequest* request = [YHHeartRequest new];
+    request.skey = _skey;
+    request.heartBeat.userName = _userID;
+    request.heartBeat.allowPush = YES;
+    request.delegate = self;
+    [request start];
+}
+- (void) stopBeating
+{
+    [YHNetRunloop removeTimer:_keepAliveTimer];
+    [_keepAliveTimer invalidate];
+    _keepAliveTimer = nil;
 }
 @end
 
