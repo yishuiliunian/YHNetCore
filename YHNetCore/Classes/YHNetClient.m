@@ -18,13 +18,14 @@
 #import "YHPushMessageHanlder.h"
 #import "YHHearterService.h"
 #import "YHPushNotifyHandler.h"
-
+#import "DZAuthSession.h"
 
 @interface YHNetClient () <YHNetSocketConnectionDelegate>
 {
     YHNetSocketConnection* _connection;
     NSMutableDictionary* _requestCache;
     YHNetResponseDispatch* _pushHanlder;
+    YHHearterService* _heaterService;
 }
 @end
 
@@ -50,6 +51,7 @@
     _connection.delegate = self;
     _requestCache = [NSMutableDictionary new];
     //
+    _heaterService = [YHHearterService new];
     //
     _pushHanlder = [YHNetResponseDispatch new];
     [_pushHanlder registerHandler:[[YHPushMessageHanlder alloc] init]];
@@ -91,12 +93,21 @@
     return request;
 }
 
+- (void) connectionDidOpen:(YHNetSocketConnection *)connection
+{
+    [_heaterService startBeating];
+}
+
+- (void) connectionDidClose:(YHNetSocketConnection *)connection
+{
+    [_heaterService stopBeating];
+}
+
 - (void) connection:(YHNetSocketConnection *)connection getFromMessage:(YHFromMessage *)message
 {
     if (connection != _connection) {
         return;
     }
-
     
     YHRequest* request = [self takeRequestWithSEQ:message.seq];
     if (request) {

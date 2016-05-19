@@ -24,20 +24,10 @@
 #import <TransitionKit/TransitionKit.h>
 #import "YHHeartRequest.h"
 #import "DZAuthSession.h"
-static NSString* const kKAActive= @"kKAActive";
-static NSString* const kKAIdle = @"kKAIdle";
 
-
-static NSString* const kKAEventBeating = @"kKAEventBeating";
-static NSString* const kKAEventStopBeating = @"kKAEventStopBeating";
 
 @interface YHNetSocketConnection ()
-{
-    NSTimer* _keepAliveTimer;
-    TKStateMachine* _keepAliveMechine;
-    NSString* _userID;
-    NSString* _skey;
-}
+
 @property (nonatomic, strong)   TKStateMachine* keepAliveMechine;
 @end
 
@@ -116,11 +106,6 @@ static NSString* const kEventDisconnection= @"kEventDisconnection";
     
     [connectionState setDidEnterStateBlock:^(TKState *state, TKTransition *transition) {
         [wSelf socketConnected];
-        [wSelf.keepAliveMechine fireEvent:kKAEventBeating userInfo:nil error:nil];
-    }];
-    
-    [connectionState setDidExitStateBlock:^(TKState *state, TKTransition *transition) {
-        [wSelf.keepAliveMechine fireEvent:kKAEventStopBeating userInfo:nil error:nil];
     }];
     
     [disconnectionState setDidEnterStateBlock:^(TKState *state, TKTransition *transition) {
@@ -137,6 +122,9 @@ static NSString* const kEventDisconnection= @"kEventDisconnection";
         }
     }
     _socketStatus = YHScketDisconnected;
+    if ([self.delegate respondsToSelector:@selector(connectionDidClose:)]) {
+        [self.delegate connectionDidClose:self];
+    }
 }
 - (void) socketConnected
 {
@@ -191,7 +179,6 @@ static NSString* const kEventDisconnection= @"kEventDisconnection";
     [NSThread detachNewThreadSelector:@selector(scheduleSend) toTarget:self withObject:nil];
     _endPoint = point;
     [self installStateMachine];
-    [self installKeepAliveMachie];
     return self;
 }
 
@@ -300,11 +287,6 @@ static NSString* const kEventDisconnection= @"kEventDisconnection";
             NSData* data = _readBuffer.bufferData;
             YHFromMessage* msg = [YHCodecWrapper decode:data];
             
-            NSString* skey = msg.headers[@"skey"];
-            NSString* uid = msg.headers[@"uid"];
-            if (skey) {
-                _skey = skey;
-            }
             if ([self.delegate respondsToSelector:@selector(connection:getFromMessage:)]) {
                 [self.delegate connection:self getFromMessage:msg];
             }
@@ -489,6 +471,8 @@ static NSString* const kEventDisconnection= @"kEventDisconnection";
 {
     if ([self canRetry]) {
         [self retryAtTimeInterval:4*(2^_currentRetryCount)];
+    } else {
+        [_stateMachine fireEvent:kEventDisconnection userInfo:nil error:nil];
     }
 }
 
@@ -506,7 +490,7 @@ static NSString* const kEventDisconnection= @"kEventDisconnection";
         if (!_retrying) {
             return;
         }
-        [self open:nil];
+        [_stateMachine fireEvent:kEventConnect userInfo:nil error:nil];
         _currentRetryCount++;
         [self onceTry];
     });
@@ -519,62 +503,7 @@ static NSString* const kEventDisconnection= @"kEventDisconnection";
 }
 
 
-#pragma KeepAlive
 
 
-- (void) installKeepAliveMachie
-{
-    _keepAliveMechine = [TKStateMachine new];
-    
-    TKState* activeState = [TKState stateWithName:kKAActive];
-    TKState* idleState = [TKState stateWithName:kKAIdle];
-    
-   
-    TKEvent* beatEvent =[TKEvent eventWithName:kKAEventBeating transitioningFromStates:@[idleState] toState:activeState];
-    TKEvent* idleEvent = [TKEvent eventWithName:kKAEventStopBeating transitioningFromStates:@[activeState] toState:idleState];
-    
-    [_keepAliveMechine addStates:@[activeState, idleState]];
-    [_keepAliveMechine addEvents:@[beatEvent, idleEvent]];
-    
-    [_keepAliveMechine setInitialState:idleState];
-    
-    __weak typeof(self) wSelf = self;
-    [activeState setDidEnterStateBlock:^(TKState *state, TKTransition *transition) {
-        [wSelf startBeating];
-    }];
-    
-    [activeState setDidExitStateBlock:^(TKState *state, TKTransition *transition) {
-        [wSelf stopBeating];
-    }];
-    
-    
-    _userID = DZActiveAuthSession.userID;
-    _skey = DZActiveAuthSession.token;
-}
-
-- (void) startBeating
-{
-    _keepAliveTimer = [NSTimer timerWithTimeInterval:60*4 target:self selector:@selector(beating) userInfo:nil repeats:YES];
-    [YHNetRunloop addTimer:_keepAliveTimer];
-    [_keepAliveTimer fire];
-}
-
-- (void) beating{
-    if (!_skey || !DZActiveAuthSession.userID) {
-        return;
-    }
-    YHHeartRequest* request = [YHHeartRequest new];
-    request.skey = _skey;
-    request.heartBeat.userName = _userID;
-    request.heartBeat.allowPush = YES;
-    request.delegate = self;
-    [request start];
-}
-- (void) stopBeating
-{
-    [YHNetRunloop removeTimer:_keepAliveTimer];
-    [_keepAliveTimer invalidate];
-    _keepAliveTimer = nil;
-}
 @end
 
