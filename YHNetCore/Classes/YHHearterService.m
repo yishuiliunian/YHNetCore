@@ -27,6 +27,27 @@ static NSString* const kKAEventStopBeating = @"kKAEventStopBeating";
 @end
 @implementation YHHearterService
 
+- (void) dealloc
+{
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
+}
+
+- (void) installNotifications
+{
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(onAccountResigter) name:kDZAuthSessionRegisterActive object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(onAccountResign) name:kDZAuthSessionResignActive object:nil];
+}
+
+- (void) onAccountResigter
+{
+    [self stopBeating];
+    [self startBeating];
+}
+
+- (void) onAccountResign
+{
+    [self stopBeating];
+}
 - (instancetype) init
 {
     self = [super init];
@@ -34,9 +55,9 @@ static NSString* const kKAEventStopBeating = @"kKAEventStopBeating";
         return self;
     }
     [self installKeepAliveMachie];
+    [self installNotifications];
     return self;
 }
-
 
 - (void) installKeepAliveMachie
 {
