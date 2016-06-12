@@ -19,7 +19,7 @@
 #import "YHHearterService.h"
 #import "YHPushNotifyHandler.h"
 #import "DZAuthSession.h"
-
+#import <DZLogger/DZLogger.h>
 @interface YHNetClient () <YHNetSocketConnectionDelegate>
 {
     YHNetSocketConnection* _connection;
@@ -115,7 +115,7 @@
     }
     else if([_pushHanlder handleFromMessage:message])
     {
-        NSLog(@"Can't Handler message");
+        DDLogError(@"无法处理消息%@",message);
     }
 }
 

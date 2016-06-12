@@ -9,7 +9,7 @@
 #import <Foundation/Foundation.h>
 #import "YHFromMessage.h"
 
-
+extern NSString* const kYHSkeyInvalidNotification ;
 @class YHRequest;
 @protocol YHRequestHandler<NSObject>
 - (void) yh_request:(YHRequest*)request onError:(NSError*)error;

@@ -21,5 +21,9 @@
     __cmd = cmd;
     return self;
 }
+- (NSString*) description
+{
+    return [NSString stringWithFormat:@"YHFromMessage<%ux> SEQ:%d CMD:(%@)", self, _seq, self.cmd];
+}
 
 @end

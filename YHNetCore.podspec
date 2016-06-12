@@ -43,4 +43,5 @@ s:
   s.dependency 'DZProgrameDefines'
   s.dependency 'TransitionKit'
   s.dependency 'Reachability'
+  s.dependency 'DZLogger'
 end

@@ -11,6 +11,9 @@
 #import "YHNetClient.h"
 #import "RpcLoginMessage.pbobjc.h"
 #import "RpcMessage.pbobjc.h"
+
+  NSString* const kYHSkeyInvalidNotification = @"kYHSkeyInvalidNotification";
+
 @interface YHRequest ()
 {
     NSTimer* _timer;
@@ -94,6 +97,9 @@
     [self invalidTimeOut];
     [self endRequest];
     [self notifyResponseError:error];
+    if (error.code == 1) {
+        [[NSNotificationCenter defaultCenter] postNotificationName:kYHSkeyInvalidNotification object:nil];
+    }
 }
 
 - (void) onNetSuccess:(id)object

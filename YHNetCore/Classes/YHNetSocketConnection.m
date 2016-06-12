@@ -24,6 +24,7 @@
 #import <TransitionKit/TransitionKit.h>
 #import "YHHeartRequest.h"
 #import "DZAuthSession.h"
+#import <DZLogger/DZLogger.h>
 
 
 @interface YHNetSocketConnection ()
@@ -139,10 +140,12 @@ static NSString* const kEventDisconnection= @"kEventDisconnection";
     NSError* error;
     [self openConnection:&error];
     _socketStatus = YHScketConnecting;
+    DDLogInfo(@"开始尝试建立连接");
 }
 
 - (void) enterErrorState:(NSDictionary*) userInfo
 {
+    DDLogInfo(@"Enter Error State %@", userInfo);
     [self close];
     NSError* error = userInfo[@"error"];
     if (error.code == kYHNetErrorTimeOut) {
@@ -329,16 +332,23 @@ static NSString* const kEventDisconnection= @"kEventDisconnection";
         case NSStreamEventOpenCompleted:
             _flag |= kDidCompleteOpenForRead;
             [self openSuccess];
+            DDLogInfo(@"写入流建立连接");
             break;
         case NSStreamEventHasBytesAvailable:
             [self readBytes];
             break;
         // if error occurred the close the stream and socket;
         case NSStreamEventErrorOccurred:
+        {
+            DDLogError(@"读入流发生问题%@",[stream streamError]);
             [self closeWithError:[stream streamError]];
+        }
             break;
         case NSStreamEventEndEncountered:
         case NSStreamEventNone:
+        {
+            DDLogError(@"读入流触发其他状态%d", eventCode);
+        }
             break;
         default:
             break;
@@ -351,12 +361,16 @@ static NSString* const kEventDisconnection= @"kEventDisconnection";
         case NSStreamEventOpenCompleted:
             _flag |= kDidCompleteOpenForWrite;
             [self openSuccess];
+            DDLogInfo(@"写入流建立连接");
             break;
         case NSStreamEventHasSpaceAvailable:
             break;
         // if error occurred the close the stream and socket;
         case NSStreamEventErrorOccurred:
+        {
+            DDLogError(@"写入流发生错误%@",[stream streamError]);
             [self closeWithError:[stream streamError]];
+        }
             break;
         default:
             break;
@@ -381,6 +395,7 @@ static NSString* const kEventDisconnection= @"kEventDisconnection";
 
 - (void) sendMessage:(YHSendMessage *)message
 {
+    DDLogInfo(@"请求%@,放入队列当中",message);
     @synchronized (_sendQueue) {
         [_sendQueue addObject:message];
     }
@@ -409,6 +424,7 @@ static NSString* const kEventDisconnection= @"kEventDisconnection";
             if (!msg) {
                 break;
             }
+            DDLogInfo(@"取出请求%@",msg);
             
             if ([self.delegate respondsToSelector:@selector(connection:willSendMessage:)]) {
                 [self.delegate connection:self willSendMessage:msg];
@@ -439,6 +455,7 @@ static NSString* const kEventDisconnection= @"kEventDisconnection";
 
 - (void) close
 {
+    DDLogError(@"连接关闭");
     [self invalideOpenTimeOut];
     if (_readStream) {
         [YHNetRunloop unscheduleReadStream:(__bridge CFReadStreamRef)(_readStream)];
