@@ -104,6 +104,7 @@
 {
     if (DZActiveAuthSession) {
         [_heaterService startBeating];
+        [_heaterService forceBeating];
     }
 }
 

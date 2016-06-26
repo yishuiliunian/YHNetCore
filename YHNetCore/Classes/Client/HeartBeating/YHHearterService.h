@@ -11,4 +11,5 @@
 @interface YHHearterService : NSObject
 - (void) startBeating;
 - (void) stopBeating;
+- (void) forceBeating;
 @end

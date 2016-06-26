@@ -36,6 +36,12 @@ static NSString* const kKAEventStopBeating = @"kKAEventStopBeating";
 {
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(onAccountResigter) name:kDZAuthSessionRegisterActive object:nil];
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(onAccountResign) name:kDZAuthSessionResignActive object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(onBecomeActive) name:UIApplicationDidBecomeActiveNotification object:nil];
+}
+
+- (void) onBecomeActive
+{
+    [self forceBeating];
 }
 
 - (void) onAccountResigter
@@ -122,4 +128,10 @@ static NSString* const kKAEventStopBeating = @"kKAEventStopBeating";
     [_keepAliveMechine fireEvent:kKAEventStopBeating userInfo:nil error:nil];
 }
 
+- (void) forceBeating
+{
+    if (DZActiveAuthSession) {
+        [self beating];
+    }
+}
 @end
