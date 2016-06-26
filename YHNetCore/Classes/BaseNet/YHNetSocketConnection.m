@@ -25,6 +25,8 @@
 #import "YHHeartRequest.h"
 #import "DZAuthSession.h"
 #import <DZLogger/DZLogger.h>
+#import "YHNetStatus.h"
+#import "YHNetNotification.h"
 
 
 @interface YHNetSocketConnection ()
@@ -162,6 +164,33 @@ static NSString* const kEventDisconnection= @"kEventDisconnection";
     }
 }
 
+- (void) installNotification
+{
+    DZAddObserverForNetworkChanged(self, @selector(handleNetchanged:));
+}
+
+- (void) dealloc
+{
+    DZRemoveObserverForNetworkChanged(self);
+}
+- (void) handleNetchanged:(NSNotification*)nc
+{
+    YHNetStatusChangeEvent* event = nc.userInfo.yh_netStatusChangEvent;
+    if (event.originStatus == NotReachable && event.aimStatus != NotReachable) {
+        NSError* error;
+        [self open:&error];
+        DDLogError(@"(NO->Reach)网络变化时尝试链接%@",error);
+    } else if (event.originStatus == ReachableViaWWAN && event.aimStatus == ReachableViaWiFi) {
+        NSError* error = [NSError YH_Error:kYHNetActiveDisconnect reason:@"主动断开链接"];
+        [self closeWithError:error];
+        DDLogError(@"尝试充值链接，先关闭%@",error);
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+            NSError* error;
+            [self open:&error];
+            DDLogError(@"(WLAN->WIFI)网络变化时尝试链接%@",error);
+        });
+    }
+}
 - (instancetype) initWithEndPoint:(YHEndPoint*)point
 {
     self = [super init];
@@ -182,6 +211,7 @@ static NSString* const kEventDisconnection= @"kEventDisconnection";
     [NSThread detachNewThreadSelector:@selector(scheduleSend) toTarget:self withObject:nil];
     _endPoint = point;
     [self installStateMachine];
+    [self installNotification];
     return self;
 }
 
@@ -248,7 +278,6 @@ static NSString* const kEventDisconnection= @"kEventDisconnection";
     [self stopRetry];
     if ((_flag & kDidCompleteOpenForRead) && (_flag & kDidCompleteOpenForWrite) ) {
         [_stateMachine fireEvent:kEventConnected userInfo:nil error:nil];
-
     }
 
 }
@@ -367,12 +396,11 @@ static NSString* const kEventDisconnection= @"kEventDisconnection";
             break;
         // if error occurred the close the stream and socket;
         case NSStreamEventErrorOccurred:
-        {
-            DDLogError(@"写入流发生错误%@",[stream streamError]);
-            [self closeWithError:[stream streamError]];
-        }
-            break;
         default:
+            {
+                DDLogError(@"写入流发生错误%@",[stream streamError]);
+                [self closeWithError:[stream streamError]];
+            }
             break;
     }
 }
@@ -410,7 +438,7 @@ static NSString* const kEventDisconnection= @"kEventDisconnection";
         @autoreleasepool {
         YHSendMessage* msg = nil;
         for (;;) {
-            if (!_socketStatus == YHScketConnected) {
+            if (_socketStatus != YHScketConnected) {
                 break;
             }
             @synchronized (_sendQueue) {

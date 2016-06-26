@@ -11,7 +11,7 @@
 #import "DZAuthSession.h"
 #import "YHNetRunloop.h"
 #import <TransitionKit/TransitionKit.h>
-
+#import "YHMessageSyncCenter.h"
 static NSString* const kKAActive= @"kKAActive";
 static NSString* const kKAIdle = @"kKAIdle";
 
@@ -78,6 +78,7 @@ static NSString* const kKAEventStopBeating = @"kKAEventStopBeating";
     __weak typeof(self) wSelf = self;
     [activeState setDidEnterStateBlock:^(TKState *state, TKTransition *transition) {
         [wSelf __startBeating];
+        [[YHMessageSyncCenter shareCenter] syncMessage:0];
     }];
     
     [activeState setDidExitStateBlock:^(TKState *state, TKTransition *transition) {

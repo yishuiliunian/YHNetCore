@@ -20,6 +20,9 @@
 #import "YHPushNotifyHandler.h"
 #import "DZAuthSession.h"
 #import <DZLogger/DZLogger.h>
+#import "YHAcquirRequest.h"
+#import "YHDNS.h"
+#import "YHNetStatus.h"
 @interface YHNetClient () <YHNetSocketConnectionDelegate>
 {
     YHNetSocketConnection* _connection;
@@ -46,7 +49,8 @@
     if (!self) {
         return self;
     }
-    YHEndPoint* endP0int = [[YHEndPoint alloc] initWithHost:@"182.254.232.60" port:@"10010"];
+    YHHost* host = [YHDNS shareDNS].yaoheHost;
+    YHEndPoint* endP0int = [[YHEndPoint alloc] initWithHost:host.ip port:host.port];
     _connection = [[YHNetSocketConnection alloc] initWithEndPoint:endP0int];
     _connection.delegate = self;
     _requestCache = [NSMutableDictionary new];
@@ -56,9 +60,11 @@
     _pushHanlder = [YHNetResponseDispatch new];
     [_pushHanlder registerHandler:[[YHPushMessageHanlder alloc] init]];
     [_pushHanlder registerHandler:[YHPushNotifyHandler new]];
-    
-     
     [self open];
+    
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(5 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        [YHNetStatus shareInstance];
+    });
     return self;
 }
 
@@ -67,6 +73,7 @@
 {
     NSError* error;
     [_connection open:&error];
+    DDLogError(@"打开链接失败%@",error);
 }
 
 
@@ -95,7 +102,9 @@
 
 - (void) connectionDidOpen:(YHNetSocketConnection *)connection
 {
-    [_heaterService startBeating];
+    if (DZActiveAuthSession) {
+        [_heaterService startBeating];
+    }
 }
 
 - (void) connectionDidClose:(YHNetSocketConnection *)connection

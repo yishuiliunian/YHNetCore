@@ -9,6 +9,7 @@
 #import "YHPushNotifyHandler.h"
 #import "YHSyncMsgRequest.h"
 #import "DZAuthSession.h"
+#import "YHMessageSyncCenter.h"
 @implementation YHPushNotifyHandler
 - (instancetype) init
 {
@@ -32,14 +33,11 @@
 
 - (void) onHandleError:(NSError *)error
 {
-    
+    [super onHandleError:error];
 }
 
 - (void) onHandleObject:(PushNotifyRequest*)object
 {
-    YHSyncMsgRequest* sync = [YHSyncMsgRequest new];
-    sync.syncMsg.cookieId = object.cookieId;
-    sync.skey = DZActiveAuthSession.token;
-    [sync start];
+    [[YHMessageSyncCenter shareCenter] syncMessage:object.cookieId];
 }
 @end
