@@ -44,8 +44,9 @@
 
 - (void) addHeader:(NSString *)paramter forKey:(NSString *)key
 {
-    NSParameterAssert(paramter);
-    NSParameterAssert(key);
+    if (!paramter || !key) {
+        return;
+    }
     _allHeaders[key] = paramter;
 }
 - (NSDictionary*) requestHeader
