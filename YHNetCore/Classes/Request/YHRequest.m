@@ -11,8 +11,9 @@
 #import "YHNetClient.h"
 #import "RpcLoginMessage.pbobjc.h"
 #import "RpcMessage.pbobjc.h"
-
-  NSString* const kYHSkeyInvalidNotification = @"kYHSkeyInvalidNotification";
+#import "YHRequest_RequestID.h"
+#import "YHNetRunloop.h"
+NSString* const kYHSkeyInvalidNotification = @"kYHSkeyInvalidNotification";
 
 @interface YHRequest ()
 {
@@ -30,7 +31,7 @@
     if (!self) {
         return self;
     }
-    _timeout = 60;
+    _timeout = 20;
     _allHeaders = [NSMutableDictionary new];
     _b_oneway = NO;
     _responseClass = [SimpleResponse class];
@@ -39,7 +40,9 @@
 
 - (void) startTimeOut
 {
+    [self invalidTimeOut];
     _timer = [NSTimer scheduledTimerWithTimeInterval:_timeout target:self selector:@selector(toggleTimeOut) userInfo:nil repeats:NO];
+    [YHNetRunloop addTimer:_timer];
 }
 
 - (void) addHeader:(NSString *)paramter forKey:(NSString *)key
@@ -56,19 +59,22 @@
 - (void) invalidTimeOut
 {
     [_timer invalidate];
+    [YHNetRunloop removeTimer:_timer];
     _timer = nil;
+    
 
 }
 - (void) toggleTimeOut
 {
     [self invalidTimeOut];
-    [self onError:[NSError YH_Error:kYHNetErrorTimeOut reason:@"服务好长时间没反应，跑路了？"]];
+    if ([self.timeoutDelegate respondsToSelector:@selector(requestOccurTimeOut:)]) {
+        [self.timeoutDelegate requestOccurTimeOut:self];
+    }
 }
 
 - (void) notifyResponseError:(NSError*)error
 {
-    dispatch_sync(dispatch_get_main_queue(), ^{
-
+    void(^Action)(void) = ^(void) {
         if ([self.delegate respondsToSelector:@selector(yh_request:onError:)]) {
             [self.delegate yh_request:self onError:error];
         }
@@ -76,13 +82,18 @@
         if (self.errorHandler) {
             self.errorHandler(error);
         }
-        
-    });
+    };
+    if ([NSThread isMainThread]) {
+        Action();
+    } else {
+        dispatch_async(dispatch_get_main_queue(),Action);
+    }
+  
 }
 
 - (void) notifyResponseSuccess:(id)object
 {
-    dispatch_sync(dispatch_get_main_queue(), ^{
+    void(^Action)(void) = ^(void) {
         if ([self.delegate respondsToSelector:@selector(yh_request:onSuccess:)]) {
             [self.delegate yh_request:self onSuccess:object];
         }
@@ -90,7 +101,12 @@
         if (self.successHanlder) {
             self.successHanlder(object);
         }
-    });
+    };
+    if ([NSThread isMainThread]) {
+        Action();
+    } else {
+        dispatch_async(dispatch_get_main_queue(),Action);
+    }
 
 }
 - (void) onError:(NSError*)error
@@ -128,7 +144,6 @@
             [self onNetSuccess:rsp];
         }
     }
-    [self invalidTimeOut];
 }
 
 - (void) start

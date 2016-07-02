@@ -23,7 +23,9 @@
 #import "YHAcquirRequest.h"
 #import "YHDNS.h"
 #import "YHNetStatus.h"
-@interface YHNetClient () <YHNetSocketConnectionDelegate>
+#import "YHRequest_RequestID.h"
+#import "NSError+YHNetError.h"
+@interface YHNetClient () <YHNetSocketConnectionDelegate, YHRequestTimeOutDelegate>
 {
     YHNetSocketConnection* _connection;
     NSMutableDictionary* _requestCache;
@@ -85,6 +87,9 @@
     @synchronized (_requestCache) {
         _requestCache[@(msg.seq)] = request;
     }
+    request.timeoutDelegate  = self;
+    request.seq = msg.seq;
+    [request startTimeOut];
     [_connection sendMessage:msg];
 }
 
@@ -129,5 +134,13 @@
     }
 }
 
+- (void) requestOccurTimeOut:(YHRequest *)request
+{
+    @synchronized (_requestCache) {
+        request = _requestCache[@(request.seq)];
+        [_requestCache removeObjectForKey:@(request.seq)];
+        [request onError:[NSError YH_Error:kYHNetErrorTimeOut reason:@"服务好长时间没反应，跑路了？"]];
+    }
+}
 
 @end
