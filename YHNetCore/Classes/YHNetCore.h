@@ -13,5 +13,5 @@
 #import "YHAuthedRequest.h"
 #import "YHNetNotification.h"
 #import <NetContants/NetContants.h>
-
+#import <YHProtoBuff/YHProtoBuff.h>
 #endif /* YHNetCore_h */
