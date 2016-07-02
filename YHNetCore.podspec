@@ -44,4 +44,5 @@ s:
   s.dependency 'TransitionKit'
   s.dependency 'Reachability'
   s.dependency 'DZLogger'
+  s.dependency 'NetContants'
 end
