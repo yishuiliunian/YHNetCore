@@ -342,7 +342,7 @@ static NSString* const kEventDisconnection= @"kEventDisconnection";
     } else {
         aimLength = _readBuffer.dataLength;
     }
-    if (_readBuffer.reciveDataLength + length < aimLength) {
+    if (0 <length &&  _readBuffer.reciveDataLength + length < aimLength) {
         [_readBuffer appendBytes:readBufferPoint length:length];
     } else if (_readBuffer.reciveDataLength + length == aimLength) {
         [_readBuffer appendBytes:readBufferPoint length:length];
