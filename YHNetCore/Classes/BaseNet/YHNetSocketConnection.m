@@ -295,7 +295,7 @@ static NSString* const kEventDisconnection= @"kEventDisconnection";
 
 - (void) readBytes
 {
-    static NSUInteger MaxReadLength = 1024;
+    static NSUInteger MaxReadLength = 1024*30;
     while ([_readStream hasBytesAvailable]) {
         uint8_t *buffer = malloc(sizeof(uint8_t) * MaxReadLength);
         int64_t length =  [_readStream read:buffer maxLength:MaxReadLength];
@@ -309,7 +309,7 @@ static NSString* const kEventDisconnection= @"kEventDisconnection";
 // you must be so carefully about those lines , the sever transfer data not only sperate package and join package!!, so you need join it and sperate it too.
 - (void) deallWithBuffer:(uint8_t*)buffer length:(int64_t)length
 {
-    
+
     if (length == NSNotFound) {
         return;
     }
@@ -342,7 +342,7 @@ static NSString* const kEventDisconnection= @"kEventDisconnection";
     } else {
         aimLength = _readBuffer.dataLength;
     }
-    if (0 <length &&  _readBuffer.reciveDataLength + length < aimLength) {
+    if (0 <length && ( _readBuffer.reciveDataLength + length < aimLength)) {
         [_readBuffer appendBytes:readBufferPoint length:length];
     } else if (_readBuffer.reciveDataLength + length == aimLength) {
         [_readBuffer appendBytes:readBufferPoint length:length];
@@ -351,7 +351,11 @@ static NSString* const kEventDisconnection= @"kEventDisconnection";
         int32_t readLength = (aimLength - _readBuffer.reciveDataLength);
         [_readBuffer appendBytes:readBufferPoint length:readLength];
         CheckFull();
-        [self deallWithBuffer:readBufferPoint+readLength length:length-readLength];
+        if (length - readLength < 0) {
+            return;
+        } else {
+            [self deallWithBuffer:readBufferPoint+readLength length:length-readLength];
+        }
     }
 }
 
@@ -439,6 +443,15 @@ static NSString* const kEventDisconnection= @"kEventDisconnection";
         YHSendMessage* msg = nil;
         for (;;) {
             if (_socketStatus != YHScketConnected) {
+                if ([UIApplication sharedApplication].applicationState == UIApplicationStateActive &&
+                    _socketStatus == YHScketDisconnected )
+                {
+                    NSError* error;
+                    [self open:&error];
+                    if (error) {
+                        DDLogError(@"在断开的状态下进行重练%@",error);
+                    }
+                }
                 break;
             }
             @synchronized (_sendQueue) {
