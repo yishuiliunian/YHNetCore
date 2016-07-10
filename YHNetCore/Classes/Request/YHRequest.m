@@ -20,6 +20,7 @@ NSString* const kYHSkeyInvalidNotification = @"kYHSkeyInvalidNotification";
     NSTimer* _timer;
     NSMutableDictionary* _allHeaders;
 }
+
 @end
 
 @implementation YHRequest

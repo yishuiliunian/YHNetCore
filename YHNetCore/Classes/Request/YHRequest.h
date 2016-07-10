@@ -33,9 +33,11 @@ extern NSString* const kYHSkeyInvalidNotification ;
 @property (nonatomic, assign) BOOL b_oneway;
 @property (nonatomic, assign) NSTimeInterval timeout;
 @property (nonatomic, strong) Class responseObjectClass;
-@property (nonatomic, strong) void(^errorHandler)(NSError* error)  ;
+@property (nonatomic, strong) void(^errorHandler)(NSError* error) ;
 @property (nonatomic, strong) void(^successHanlder) (id object);
 
+- (void) setErrorHandler:(void (^)(NSError * error))errorHandler;
+- (void) setSuccessHanlder:(void (^)(id object))successHanlder;
 - (void) addHeader:(NSString*)paramter forKey:(NSString*)key;
 
 - (void) notifyResponseError:(NSError*)error;
