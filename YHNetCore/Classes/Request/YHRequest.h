@@ -35,6 +35,7 @@ extern NSString* const kYHSkeyInvalidNotification ;
 @property (nonatomic, strong) Class responseObjectClass;
 @property (nonatomic, strong) void(^errorHandler)(NSError* error) ;
 @property (nonatomic, strong) void(^successHanlder) (id object);
+@property (nonatomic, strong, readonly) YHFromMessage*  responseMessage;
 
 - (void) setErrorHandler:(void (^)(NSError * error))errorHandler;
 - (void) setSuccessHanlder:(void (^)(id object))successHanlder;

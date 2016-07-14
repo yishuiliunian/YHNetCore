@@ -129,6 +129,7 @@ NSString* const kYHSkeyInvalidNotification = @"kYHSkeyInvalidNotification";
 
 - (void) reciveRspMessage:(YHFromMessage *)message
 {
+    _responseMessage = message;
     if (message.error) {
         [self onError:message.error];
     } else {
