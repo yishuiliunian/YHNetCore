@@ -207,10 +207,10 @@ static NSString* const kEventDisconnection= @"kEventDisconnection";
     _currentRetryCount = 0;
     _retrying = NO;
     _destry = NO;
+    [self installStateMachine];
     //schedule send message in thread
     [NSThread detachNewThreadSelector:@selector(scheduleSend) toTarget:self withObject:nil];
     _endPoint = point;
-    [self installStateMachine];
     [self installNotification];
     return self;
 }
