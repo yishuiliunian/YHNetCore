@@ -23,6 +23,9 @@
 
 - (void) syncMessage:(int64_t)cookieId
 {
+    if (DZActiveAuthSession.token.length == 0) {
+        return;
+    }
     YHSyncMsgRequest* sync = [YHSyncMsgRequest new];
     sync.syncMsg.cookieId = cookieId;
     sync.skey = DZActiveAuthSession.token;
