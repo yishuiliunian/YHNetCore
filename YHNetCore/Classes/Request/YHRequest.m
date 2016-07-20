@@ -13,6 +13,7 @@
 #import "RpcMessage.pbobjc.h"
 #import "YHRequest_RequestID.h"
 #import "YHNetRunloop.h"
+#import <DZLogger/DZLogger.h>
 NSString* const kYHSkeyInvalidNotification = @"kYHSkeyInvalidNotification";
 
 @interface YHRequest ()
@@ -120,6 +121,7 @@ NSString* const kYHSkeyInvalidNotification = @"kYHSkeyInvalidNotification";
 }
 - (void) onError:(NSError*)error
 {
+    DDLogError(@"网络错误%@ : %@",self, error);
     [self invalidTimeOut];
     [self endRequest];
     [self notifyResponseError:error];
