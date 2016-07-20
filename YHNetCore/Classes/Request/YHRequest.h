@@ -24,6 +24,7 @@ extern NSString* const kYHSkeyInvalidNotification ;
     Class _responseClass;
 }
 @property (nonatomic, weak) NSObject<YHRequestHandler>* delegate;
+@property (nonatomic, assign, readonly) BOOL canceled;
 @property (nonatomic, assign, readonly) BOOL requesting;
 @property (nonatomic, assign, readonly) int64_t seq;
 @property (nonatomic, strong, readonly) NSDictionary* requestHeader;
@@ -43,6 +44,8 @@ extern NSString* const kYHSkeyInvalidNotification ;
 
 - (void) notifyResponseError:(NSError*)error;
 - (void) notifyResponseSuccess:(id)object;
+
+- (void) cancel;
 @end
 
 @interface YHRequest ()
