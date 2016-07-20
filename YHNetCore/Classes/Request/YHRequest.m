@@ -122,6 +122,11 @@ NSString* const kYHSkeyInvalidNotification = @"kYHSkeyInvalidNotification";
 - (void) onError:(NSError*)error
 {
     DDLogError(@"网络错误%@ : %@",self, error);
+    
+    if (error.localizedDescription.length == 0) {
+        NSString* msg = [NSString stringWithFormat:@"网络错误，稍后重试(%d)",error.code];
+        error = [NSError errorWithDomain:error.domain code:error.code userInfo:@{NSLocalizedDescriptionKey:msg}];
+    }
     [self invalidTimeOut];
     [self endRequest];
     [self notifyResponseError:error];
