@@ -52,7 +52,7 @@
     NSArray* messages = [YHActiveDBConnection updateMessagesFromServer:object.msgArray];
     if (messages.count) {
         DZPostNewServerMessage(@{
-                                 @"messages":messages,
+                                 @"messages":[messages copy],
                                  });
     }
     

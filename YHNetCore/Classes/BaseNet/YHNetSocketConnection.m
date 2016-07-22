@@ -60,6 +60,7 @@
     NSInteger _maxRetryCount;
     NSInteger _currentRetryCount;
     BOOL _retrying;
+    dispatch_semaphore_t _queueSemphore;
 }
 @end
 
@@ -207,11 +208,13 @@ static NSString* const kEventDisconnection= @"kEventDisconnection";
     _currentRetryCount = 0;
     _retrying = NO;
     _destry = NO;
+    _queueSemphore = dispatch_semaphore_create(0);
     [self installStateMachine];
     //schedule send message in thread
     [NSThread detachNewThreadSelector:@selector(scheduleSend) toTarget:self withObject:nil];
     _endPoint = point;
     [self installNotification];
+    
     return self;
 }
 
@@ -427,63 +430,72 @@ static NSString* const kEventDisconnection= @"kEventDisconnection";
 
 - (void) sendMessage:(YHSendMessage *)message
 {
-    DDLogInfo(@"请求%@,放入队列当中",message);
+    DDLogInfo(@"请求%@,放入队列当中 SEQ:[%lld]",message, message.seq);
     @synchronized (_sendQueue) {
         [_sendQueue addObject:message];
     }
     if ([self.delegate respondsToSelector:@selector(connection:enqueueSendMessage:)]) {
         [self.delegate connection:self enqueueSendMessage:message];
     }
+    dispatch_semaphore_signal(_queueSemphore);
 }
 
 - (void) scheduleSend
 {
     while (!_destry) {
-        @autoreleasepool {
-        YHSendMessage* msg = nil;
-        for (;;) {
-            if (_socketStatus != YHScketConnected) {
-                if ([UIApplication sharedApplication].applicationState == UIApplicationStateActive &&
-                    _socketStatus == YHScketDisconnected )
-                {
-                    NSError* error;
-                    [self open:&error];
-                    if (error) {
-                        DDLogError(@"在断开的状态下进行重练%@",error);
+        
+        void(^eatSendMessage)(void) = ^(void) {
+            @autoreleasepool {
+                YHSendMessage* msg = nil;
+                for (;;) {
+                    if (_socketStatus != YHScketConnected) {
+                        if ([UIApplication sharedApplication].applicationState == UIApplicationStateActive &&
+                            _socketStatus == YHScketDisconnected )
+                        {
+                            NSError* error;
+                            [self open:&error];
+                            if (error) {
+                                DDLogError(@"在断开的状态下进行重练%@",error);
+                            }
+                        }
+                        break;
                     }
-                }
-                break;
-            }
-            @synchronized (_sendQueue) {
-                if (_sendQueue.count == 0) {
-                    break;
-                }
-                msg = _sendQueue.firstObject;
-                [_sendQueue removeObject:msg];
-            }
-            
-            if (!msg) {
-                break;
-            }
-            DDLogInfo(@"取出请求%@",msg);
-            
-            if ([self.delegate respondsToSelector:@selector(connection:willSendMessage:)]) {
-                [self.delegate connection:self willSendMessage:msg];
-            }
-            
-            NSData* data = [YHCodecWrapper encode:msg];
-            [_writeStream write:[data bytes] maxLength:data.length];
-            
-            if ([self.delegate respondsToSelector:@selector(connection:didSendMessage:)]) {
-                [self.delegate connection:self didSendMessage:msg];
-            }
+                    @synchronized (_sendQueue) {
+                        if (_sendQueue.count == 0) {
+                            break;
+                        }
+                        msg = _sendQueue.firstObject;
+                        [_sendQueue removeObject:msg];
+                    }
+                    
+                    if (!msg) {
+                        break;
+                    }
+                    DDLogInfo(@"取出请求%@",msg);
+                    
+                    if ([self.delegate respondsToSelector:@selector(connection:willSendMessage:)]) {
+                        [self.delegate connection:self willSendMessage:msg];
+                    }
+                    
+                    NSData* data = [YHCodecWrapper encode:msg];
+                    [_writeStream write:[data bytes] maxLength:data.length];
+                    
+                    if ([self.delegate respondsToSelector:@selector(connection:didSendMessage:)]) {
+                        [self.delegate connection:self didSendMessage:msg];
+                    }
 #ifdef DEBUG
-            NSLog(@"Send Message %d , %@", msg.seq, msg.cmd);
+                    NSLog(@"Send Message %d , %@", msg.seq, msg.cmd);
 #endif
-            break;
+                    break;
+                    
+                }
+            }
+        };
+        int count = _sendQueue.count;
+        for (int i = 0; i < count; i++) {
+            eatSendMessage();
         }
-        }
-        [NSThread sleepForTimeInterval:0.01];
+        dispatch_semaphore_wait(_queueSemphore, DISPATCH_TIME_FOREVER);
     }
 }
 

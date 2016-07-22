@@ -128,7 +128,7 @@
     if (request) {
         [request reciveRspMessage:message];
     }
-    else if([_pushHanlder handleFromMessage:message])
+    else if(![_pushHanlder handleFromMessage:message])
     {
         DDLogError(@"无法处理消息%@",message);
     }

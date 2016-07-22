@@ -17,7 +17,7 @@
 @property (nonatomic, strong, readonly) NSString* servant;
 @property (nonatomic, strong, readonly) NSString* method;
 - (BOOL) canHanldCmd:(YHCmd*)cmd;
-- (void) handleFromMessage:(YHFromMessage*)message;
+- (BOOL) handleFromMessage:(YHFromMessage*)message;
 
 
 - (void) onHandleObject:(id)object;

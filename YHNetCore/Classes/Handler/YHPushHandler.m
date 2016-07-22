@@ -41,7 +41,7 @@
 {
     
 }
-- (void) handleFromMessage:(YHFromMessage*)message
+- (BOOL) handleFromMessage:(YHFromMessage*)message
 {
     NSError* error = nil;
     id msg = [_responseClass parseFromData:message.data error:&error];
@@ -51,6 +51,7 @@
     {
         [self onHandleError:error];
     }
+    return YES;
     
 }
 @end

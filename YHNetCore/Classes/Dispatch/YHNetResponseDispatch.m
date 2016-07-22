@@ -36,8 +36,9 @@
 {
     for (YHPushHandler* hanlder  in _allHandler) {
         if ([hanlder canHanldCmd:message.cmd]) {
-            [hanlder handleFromMessage:message];
+           return [hanlder handleFromMessage:message];
         }
     }
+    return NO;
 }
 @end

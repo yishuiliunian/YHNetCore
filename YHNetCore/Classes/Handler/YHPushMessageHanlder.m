@@ -43,7 +43,7 @@
  
     if (messages.count) {
         DZPostNewServerMessage(@{
-                                 @"messages":messages,
+                                 @"messages":[messages copy],
                                  });
     }
     
