@@ -89,7 +89,9 @@
     }
     request.timeoutDelegate  = self;
     request.seq = msg.seq;
-    [request startTimeOut];
+    if (!request.b_oneway) {
+        [request startTimeOut];
+    }
     [_connection sendMessage:msg];
 }
 
