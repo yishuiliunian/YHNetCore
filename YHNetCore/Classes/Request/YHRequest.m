@@ -130,9 +130,7 @@ NSString* const kYHSkeyInvalidNotification = @"kYHSkeyInvalidNotification";
     [self invalidTimeOut];
     [self endRequest];
     [self notifyResponseError:error];
-    if (error.code == 14) {
-        [[NSNotificationCenter defaultCenter] postNotificationName:kYHSkeyInvalidNotification object:nil];
-    }
+
 }
 
 - (void) onNetSuccess:(id)object

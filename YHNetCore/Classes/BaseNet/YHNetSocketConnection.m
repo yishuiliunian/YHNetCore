@@ -282,6 +282,7 @@ static NSString* const kEventDisconnection= @"kEventDisconnection";
     if ((_flag & kDidCompleteOpenForRead) && (_flag & kDidCompleteOpenForWrite) ) {
         [_stateMachine fireEvent:kEventConnected userInfo:nil error:nil];
     }
+    dispatch_semaphore_signal(_queueSemphore);
 
 }
 

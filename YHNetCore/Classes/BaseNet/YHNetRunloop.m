@@ -20,6 +20,10 @@ static NSRunLoop* YHGlobalRunloop = nil;
 
 + (NSRunLoop*) runloop
 {
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        [self requestThread];
+    });
     return YHGlobalRunloop;
 }
 

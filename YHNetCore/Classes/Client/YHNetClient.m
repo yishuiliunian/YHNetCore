@@ -123,7 +123,7 @@
     if (connection != _connection) {
         return;
     }
-    
+ 
     YHRequest* request = [self takeRequestWithSEQ:message.seq];
     if (request) {
         [request reciveRspMessage:message];
@@ -131,6 +131,9 @@
     else if(![_pushHanlder handleFromMessage:message])
     {
         DDLogError(@"无法处理消息%@",message);
+    }
+    if (message.error.code == 14) {
+        [[NSNotificationCenter defaultCenter] postNotificationName:kYHSkeyInvalidNotification object:nil];
     }
 }
 
