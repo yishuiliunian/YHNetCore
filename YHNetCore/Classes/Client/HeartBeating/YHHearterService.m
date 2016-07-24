@@ -12,18 +12,26 @@
 #import "YHNetRunloop.h"
 #import <TransitionKit/TransitionKit.h>
 #import "YHMessageSyncCenter.h"
+#import "YHStepPoint.h"
+#import <DZLogger.h>
 static NSString* const kKAActive= @"kKAActive";
 static NSString* const kKAIdle = @"kKAIdle";
+static NSString* const kKAShifting = @"kKAShifting";
 
 
 static NSString* const kKAEventBeating = @"kKAEventBeating";
 static NSString* const kKAEventStopBeating = @"kKAEventStopBeating";
+static NSString* const kKAEventShifting = @"kKAEventShifting";
+static NSString* const kKAEventActive = @"kKAEventActive";
 
-@interface YHHearterService () <YHRequestHandler>
+
+
+@interface YHHearterService () <YHRequestHandler, YHStepPointDelegate>
 {
     NSTimer* _keepAliveTimer;
     TKStateMachine* _keepAliveMechine;
 }
+@property (nonatomic, strong) YHStepPoint* stepPoint;
 @end
 @implementation YHHearterService
 
@@ -42,6 +50,7 @@ static NSString* const kKAEventStopBeating = @"kKAEventStopBeating";
 - (void) onBecomeActive
 {
     [self forceBeating];
+    [self startBeating];
 }
 
 - (void) onAccountResigter
@@ -71,20 +80,41 @@ static NSString* const kKAEventStopBeating = @"kKAEventStopBeating";
     
     TKState* activeState = [TKState stateWithName:kKAActive];
     TKState* idleState = [TKState stateWithName:kKAIdle];
+    TKState* shiftingState = [TKState stateWithName:kKAShifting];
     
     
-    TKEvent* beatEvent =[TKEvent eventWithName:kKAEventBeating transitioningFromStates:@[idleState] toState:activeState];
-    TKEvent* idleEvent = [TKEvent eventWithName:kKAEventStopBeating transitioningFromStates:@[activeState] toState:idleState];
+    TKEvent* beatEvent =[TKEvent eventWithName:kKAEventBeating transitioningFromStates:@[idleState] toState:shiftingState];
+    TKEvent* idleEvent = [TKEvent eventWithName:kKAEventStopBeating transitioningFromStates:@[activeState, shiftingState] toState:idleState];
+    TKEvent* shiftingEvetn = [TKEvent eventWithName:kKAEventShifting transitioningFromStates:@[idleState, activeState] toState:shiftingState];
+    TKEvent* activeEvent = [TKEvent eventWithName:kKAEventActive transitioningFromStates:@[shiftingState] toState:activeState];
     
-    [_keepAliveMechine addStates:@[activeState, idleState]];
-    [_keepAliveMechine addEvents:@[beatEvent, idleEvent]];
+    
+    [_keepAliveMechine addStates:@[activeState, idleState, shiftingState]];
+    [_keepAliveMechine addEvents:@[beatEvent, idleEvent, activeEvent, shiftingEvetn]];
     
     [_keepAliveMechine setInitialState:idleState];
     
     __weak typeof(self) wSelf = self;
+    
+    [shiftingState setDidEnterStateBlock:^(TKState *state, TKTransition *transition) {
+        
+        [wSelf.stepPoint cancel];
+        wSelf.stepPoint = [[YHStepPoint alloc] initWithTimes:@[@(2), @(5), @(30), @(60), @(120)]];
+        wSelf.stepPoint.delegate = self;
+        [wSelf.stepPoint fire];
+        [[YHMessageSyncCenter shareCenter] syncMessage:0];
+        DDLogInfo(@"进入渐变模式，按照间隔递增模式发送心跳包...");
+    }];
+    
+    [shiftingState setDidExitStateBlock:^(TKState *state, TKTransition *transition) {
+        [wSelf.stepPoint cancel];
+        wSelf.stepPoint = nil;
+    }];
+    
     [activeState setDidEnterStateBlock:^(TKState *state, TKTransition *transition) {
         [wSelf __startBeating];
         [[YHMessageSyncCenter shareCenter] syncMessage:0];
+
     }];
     
     [activeState setDidExitStateBlock:^(TKState *state, TKTransition *transition) {
@@ -93,11 +123,25 @@ static NSString* const kKAEventStopBeating = @"kKAEventStopBeating";
     
 }
 
+- (void) stepPointDidStep:(YHStepPoint *)point
+{
+    static int count;
+    NSLog(@"get step count %d", count ++);
+    [self beating];
+    DDLogInfo(@"递增模式下发送心跳包...");
+}
+- (void) stepPointDidReachAim:(YHStepPoint *)point
+{
+    [_keepAliveMechine fireEvent:kKAEventActive userInfo:nil error:nil];
+    DDLogInfo(@"递增模式结束，进入稳定状态");
+}
+
 - (void) __startBeating
 {
     _keepAliveTimer = [NSTimer timerWithTimeInterval:60*4 target:self selector:@selector(beating) userInfo:nil repeats:YES];
     [YHNetRunloop addTimer:_keepAliveTimer];
     [_keepAliveTimer fire];
+    DDLogInfo(@"进入稳定模式，持续稳定发送心跳包....");
 }
 
 - (void) beating{
@@ -110,17 +154,19 @@ static NSString* const kKAEventStopBeating = @"kKAEventStopBeating";
     request.heartBeat.allowPush = YES;
     request.delegate = self;
     [request start];
+    DDLogInfo(@"发送一次心跳包...");
 }
 - (void) __stopBeating
 {
     [YHNetRunloop removeTimer:_keepAliveTimer];
     [_keepAliveTimer invalidate];
     _keepAliveTimer = nil;
+    DDLogInfo(@"停止发送心跳包....");
 }
 
 - (void) startBeating
 {
-    [_keepAliveMechine fireEvent:kKAEventBeating userInfo:nil error:nil];
+    [_keepAliveMechine fireEvent:kKAEventShifting userInfo:nil error:nil];
 }
 
 - (void) stopBeating
