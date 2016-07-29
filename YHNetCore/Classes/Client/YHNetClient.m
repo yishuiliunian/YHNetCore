@@ -126,6 +126,7 @@
         return;
     }
  
+    DDLogInfo(@"从服务器得到响应SEQ[%D],\%@", message.seq, message.cmd);
     YHRequest* request = [self takeRequestWithSEQ:message.seq];
     if (request) {
         [request reciveRspMessage:message];

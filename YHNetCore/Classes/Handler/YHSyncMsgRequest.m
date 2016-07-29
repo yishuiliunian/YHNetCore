@@ -49,19 +49,10 @@
 - (void) onNetSuccess:(SyncMsgResponse*)object
 {
     
-    NSArray* messages = [YHActiveDBConnection updateMessagesFromServer:object.msgArray];
-    if (messages.count) {
-        DZPostNewServerMessage(@{
-                                 @"messages":[messages copy],
-                                 });
-    }
     
+
     [super onNetSuccess:object];
     
-    YHAcquirRequest* req = [YHAcquirRequest new];
-    req.acquire.cookieId = object.cookieId;
-    req.b_oneway = YES;
-    req.skey = DZActiveAuthSession.token;
-    [req start];
+
 }
 @end

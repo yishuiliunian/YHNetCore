@@ -326,10 +326,6 @@ static NSString* const kEventDisconnection= @"kEventDisconnection";
             if ([self.delegate respondsToSelector:@selector(connection:getFromMessage:)]) {
                 [self.delegate connection:self getFromMessage:msg];
             }
-#ifdef DEBUG
-            NSLog(@"Got From Message %d %@", msg.seq, msg.cmd);
-            NSLog(@"header is %@", msg.headers);
-#endif
             _readBuffer = nil;
         }
     };

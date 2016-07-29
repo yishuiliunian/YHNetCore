@@ -51,6 +51,7 @@ static NSString* const kKAEventActive = @"kKAEventActive";
 {
     [self forceBeating];
     [self startBeating];
+    [[YHMessageSyncCenter shareCenter] syncMessage:0];
 }
 
 - (void) onAccountResigter
