@@ -47,10 +47,6 @@
     [sync setSuccessHanlder:^(SyncMsgResponse* object) {
         if (object.cookieId != 0) {
             weakSelf.lastCookiedId = object.cookieId;
-            return;
-        }
-        if (object.msgArray.count == 0) {
-            return ;
         }
         NSArray* messages = [YHActiveDBConnection updateMessagesFromServer:object.msgArray];
         if (messages.count) {
