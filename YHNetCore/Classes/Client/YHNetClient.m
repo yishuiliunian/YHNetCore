@@ -25,6 +25,8 @@
 #import "YHNetStatus.h"
 #import "YHRequest_RequestID.h"
 #import "NSError+YHNetError.h"
+#import "DZLogger.h"
+#import "YHAuthedRequest.h"
 @interface YHNetClient () <YHNetSocketConnectionDelegate, YHRequestTimeOutDelegate>
 {
     YHNetSocketConnection* _connection;
@@ -135,8 +137,11 @@
     {
         DDLogError(@"无法处理消息%@",message);
     }
-    if (message.error.code == 14) {
-        [[NSNotificationCenter defaultCenter] postNotificationName:kYHSkeyInvalidNotification object:nil];
+    if ([request isKindOfClass:[YHAuthedRequest class]]) {
+        if (message.error.code == 14) {
+            [[NSNotificationCenter defaultCenter] postNotificationName:kYHSkeyInvalidNotification object:nil];
+        }
+        DDLogError(@"捕获到登录态错误,%@",request);
     }
 }
 
