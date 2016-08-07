@@ -139,9 +139,9 @@
     }
     if ([request isKindOfClass:[YHAuthedRequest class]]) {
         if (message.error.code == 14) {
+            DDLogError(@"捕获到登录态错误,%@",request);
             [[NSNotificationCenter defaultCenter] postNotificationName:kYHSkeyInvalidNotification object:nil];
         }
-        DDLogError(@"捕获到登录态错误,%@",request);
     }
 }
 
