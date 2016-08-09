@@ -30,6 +30,7 @@ static NSString* const kKAEventActive = @"kKAEventActive";
 {
     NSTimer* _keepAliveTimer;
     TKStateMachine* _keepAliveMechine;
+    NSInteger _errorCount;
 }
 @property (nonatomic, strong) YHStepPoint* stepPoint;
 @end
@@ -70,6 +71,7 @@ static NSString* const kKAEventActive = @"kKAEventActive";
     if (!self) {
         return self;
     }
+    _errorCount = 0;
     [self installKeepAliveMachie];
     [self installNotifications];
     return self;
@@ -163,6 +165,27 @@ static NSString* const kKAEventActive = @"kKAEventActive";
     [_keepAliveTimer invalidate];
     _keepAliveTimer = nil;
     DDLogInfo(@"停止发送心跳包....");
+}
+
+- (void) yh_request:(YHRequest *)request onError:(NSError *)error
+{
+    if ([request isKindOfClass:[YHHeartRequest class]]) {
+        _errorCount ++;
+        if (_errorCount < 2) {
+            [self forceBeating];
+        } else {
+            if ([self.delegate respondsToSelector:@selector(heartServiceOccurCloseError:)]) {
+                [self.delegate heartServiceOccurCloseError:self];
+            }
+        }
+    }
+}
+
+- (void) yh_request:(YHRequest *)request onSuccess:(id)object
+{
+    if ([request isKindOfClass:[YHHeartRequest class]]) {
+        _errorCount = 0;
+    }
 }
 
 - (void) startBeating

@@ -14,18 +14,19 @@
 #import "YHRequest_RequestID.h"
 #import "YHNetRunloop.h"
 #import <DZLogger/DZLogger.h>
+#import "YHRequest_Timeout.h"
 NSString* const kYHSkeyInvalidNotification = @"kYHSkeyInvalidNotification";
 
 @interface YHRequest ()
 {
-    NSTimer* _timer;
     NSMutableDictionary* _allHeaders;
+    
 }
 
 @end
 
 @implementation YHRequest
-
+@synthesize startReqeustTime = _startReqeustTime;
 
 - (instancetype) init
 {
@@ -41,12 +42,6 @@ NSString* const kYHSkeyInvalidNotification = @"kYHSkeyInvalidNotification";
     return self;
 }
 
-- (void) startTimeOut
-{
-    [self invalidTimeOut];
-    _timer = [NSTimer scheduledTimerWithTimeInterval:_timeout target:self selector:@selector(toggleTimeOut) userInfo:nil repeats:NO];
-    [YHNetRunloop addTimer:_timer];
-}
 
 - (void) addHeader:(NSString *)paramter forKey:(NSString *)key
 {
@@ -59,22 +54,6 @@ NSString* const kYHSkeyInvalidNotification = @"kYHSkeyInvalidNotification";
 {
     return [_allHeaders copy];
 }
-- (void) invalidTimeOut
-{
-    [_timer invalidate];
-    [YHNetRunloop removeTimer:_timer];
-    _timer = nil;
-    
-
-}
-- (void) toggleTimeOut
-{
-    [self invalidTimeOut];
-    if ([self.timeoutDelegate respondsToSelector:@selector(requestOccurTimeOut:)]) {
-        [self.timeoutDelegate requestOccurTimeOut:self];
-    }
-}
-
 - (void) notifyResponseError:(NSError*)error
 {
     
@@ -127,7 +106,6 @@ NSString* const kYHSkeyInvalidNotification = @"kYHSkeyInvalidNotification";
         NSString* msg = [NSString stringWithFormat:@"网络错误，稍后重试(%d)",error.code];
         error = [NSError errorWithDomain:error.domain code:error.code userInfo:@{NSLocalizedDescriptionKey:msg}];
     }
-    [self invalidTimeOut];
     [self endRequest];
     [self notifyResponseError:error];
 
@@ -135,7 +113,6 @@ NSString* const kYHSkeyInvalidNotification = @"kYHSkeyInvalidNotification";
 
 - (void) onNetSuccess:(id)object
 {
-    [self invalidTimeOut];
     [self endRequest];
     [self notifyResponseSuccess:object];
 }
@@ -160,7 +137,6 @@ NSString* const kYHSkeyInvalidNotification = @"kYHSkeyInvalidNotification";
         }
     }
 }
-
 - (void) start
 {
     if (_requesting) {

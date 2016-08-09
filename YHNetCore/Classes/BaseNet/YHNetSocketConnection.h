@@ -64,7 +64,18 @@ typedef NS_ENUM(NSInteger, YHSocketStatus) {
 @property (nonatomic, assign) NSTimeInterval timeout;
 @property (nonatomic, assign, readonly) YHSocketStatus socketStatus;
 - (instancetype) initWithEndPoint:(YHEndPoint*)point;
+/**
+ *  尝试打开连接
+ *
+ *  @param error 如果打开过程中出错，则代表错误信息
+ *
+ *  @return 是否打开成功
+ */
 - (BOOL) open:(NSError* __autoreleasing*) error;
 - (YHSendMessage*) messageWithCMD:(YHCmd *)cmd data:(NSData *)data headers:(NSDictionary *)headers;
 - (void) sendMessage:(YHSendMessage *)message;
+/**
+ *  关闭链接
+ */
+- (void) close;
 @end

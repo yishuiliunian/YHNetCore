@@ -61,6 +61,8 @@
     NSInteger _currentRetryCount;
     BOOL _retrying;
     dispatch_semaphore_t _queueSemphore;
+    
+
 }
 @end
 

@@ -53,18 +53,9 @@ extern NSString* const kYHSkeyInvalidNotification ;
 - (void) reciveRspMessage:(YHFromMessage*)mssage;
 @end
 
-
 @interface YHRequest ()
 - (void) onError:(NSError*)error;
 - (void) onNetSuccess:(id)object;
 @end
 
 
-@protocol YHRequestTimeOutDelegate <NSObject>
-- (void) requestOccurTimeOut:(YHRequest*)request;
-@end
-
-@interface YHRequest ()
-@property (nonatomic, weak) id<YHRequestTimeOutDelegate> timeoutDelegate;
-- (void) startTimeOut;
-@end
