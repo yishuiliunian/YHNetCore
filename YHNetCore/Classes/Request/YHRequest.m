@@ -35,7 +35,7 @@ NSString* const kYHSkeyInvalidNotification = @"kYHSkeyInvalidNotification";
         return self;
     }
     _canceled = NO;
-    _timeout = 20;
+    _timeout = 30;
     _allHeaders = [NSMutableDictionary new];
     _b_oneway = NO;
     _responseClass = [SimpleResponse class];
