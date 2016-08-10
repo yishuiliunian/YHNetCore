@@ -29,6 +29,7 @@
 #import "YHAuthedRequest.h"
 #import "YHNetRunloop.h"
 #import "YHRequest_Timeout.h"
+#import "YHMessageSyncCenter.h"
 
 @interface YHNetClient () <YHNetSocketConnectionDelegate, YHHearterServiceDelegate>
 {
@@ -183,6 +184,7 @@
         [_heaterService startBeating];
         [_heaterService forceBeating];
     }
+    [[YHMessageSyncCenter shareCenter] syncMessage:0];
 }
 
 - (void) connectionDidClose:(YHNetSocketConnection *)connection

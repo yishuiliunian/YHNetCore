@@ -13,6 +13,7 @@
 #import "DZAuthSession.h"
 #import "YHAcquirRequest.h"
 #import "YHNetNotification.h"
+#import <DZLogger.h>
 
 @interface YHMessageSyncCenter ()
 @property (nonatomic, assign) int64_t lastCookiedId;
@@ -36,15 +37,17 @@
     if (DZActiveAuthSession.token.length == 0) {
         return;
     }
+    DDLogInfo(@"%%%%%%%%同步消息%d%%%%%%%%%",cookieId);
     YHSyncMsgRequest* sync = [YHSyncMsgRequest new];
     sync.syncMsg.cookieId = cookieId;
     sync.skey = DZActiveAuthSession.token;
     
     [sync setErrorHandler:^(NSError *error) {
-        
+        DDLogError(@"同步消息失败%@",error);
     }];
     
     [sync setSuccessHanlder:^(SyncMsgResponse* object) {
+        DDLogInfo(@"同步消息成功");
         if (object.cookieId != 0) {
             weakSelf.lastCookiedId = object.cookieId;
         }
@@ -55,6 +58,7 @@
                                      });
         }
         
+        DDLogInfo(@"进行消息确认!");
         YHAcquirRequest* req = [YHAcquirRequest new];
         req.acquire.cookieId = object.cookieId;
         req.b_oneway = YES;

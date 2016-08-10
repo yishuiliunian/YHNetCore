@@ -59,6 +59,7 @@ static NSString* const kKAEventActive = @"kKAEventActive";
 {
     [self stopBeating];
     [self startBeating];
+    [[YHMessageSyncCenter shareCenter] syncMessage:0];
 }
 
 - (void) onAccountResign
@@ -105,7 +106,6 @@ static NSString* const kKAEventActive = @"kKAEventActive";
         wSelf.stepPoint = [[YHStepPoint alloc] initWithTimes:@[@(2), @(5), @(30), @(60), @(120)]];
         wSelf.stepPoint.delegate = self;
         [wSelf.stepPoint fire];
-        [[YHMessageSyncCenter shareCenter] syncMessage:0];
         DDLogInfo(@"进入渐变模式，按照间隔递增模式发送心跳包...");
     }];
     
@@ -116,7 +116,6 @@ static NSString* const kKAEventActive = @"kKAEventActive";
     
     [activeState setDidEnterStateBlock:^(TKState *state, TKTransition *transition) {
         [wSelf __startBeating];
-        [[YHMessageSyncCenter shareCenter] syncMessage:0];
 
     }];
     
@@ -154,7 +153,7 @@ static NSString* const kKAEventActive = @"kKAEventActive";
     YHHeartRequest* request = [YHHeartRequest new];
     request.skey = DZActiveAuthSession.token;
     request.heartBeat.userName = DZActiveAuthSession.userID;
-    request.heartBeat.allowPush = YES;
+    request.heartBeat.allowPush = 1;
     request.delegate = self;
     [request start];
     DDLogInfo(@"发送一次心跳包...");
