@@ -79,7 +79,20 @@
         [YHNetStatus shareInstance];
     });
    
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(onAccountResign) name:kDZAuthSessionResignActive object:nil];
     return self;
+}
+
+- (void) onAccountResign
+{
+    DDLogInfo(@"网络层捕获到用户退出操作，关闭网络链接");
+    [_connection close];
+    NSError* error;
+    DDLogInfo(@"网络层捕获到用户退出操作，重新建立网络链接");
+    [_connection open:&error];
+    if (error) {
+        DDLogError(@"重新建立网络链接失败,%@",error);
+    }
 }
 - (void) startTimeoutTimer
 {
@@ -183,8 +196,8 @@
     if (DZActiveAuthSession) {
         [_heaterService startBeating];
         [_heaterService forceBeating];
+        [[YHMessageSyncCenter shareCenter] syncMessage:0];
     }
-    [[YHMessageSyncCenter shareCenter] syncMessage:0];
 }
 
 - (void) connectionDidClose:(YHNetSocketConnection *)connection

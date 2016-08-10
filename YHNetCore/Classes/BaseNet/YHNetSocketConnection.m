@@ -93,7 +93,7 @@ static NSString* const kEventDisconnection= @"kEventDisconnection";
     TKEvent* connectingEvent = [TKEvent eventWithName:kEventConnect transitioningFromStates:@[disconnectionState, errorState] toState:connectingState];
     TKEvent* connectedEvent = [TKEvent eventWithName:kEventConnected transitioningFromStates:@[connectingState] toState:connectionState];
     TKEvent* errorEvent = [TKEvent eventWithName:kEventErrorOccur transitioningFromStates:@[connectingState, connectionState] toState:errorState];
-    TKEvent* disconnectionEvent = [TKEvent eventWithName:kEventDisconnection transitioningFromStates:@[errorState] toState:disconnectionState];
+    TKEvent* disconnectionEvent = [TKEvent eventWithName:kEventDisconnection transitioningFromStates:@[connectionState,connectingState,errorState] toState:disconnectionState];
     
     [_stateMachine addStates:@[connectionState, errorState, connectingState, disconnectionState]];
     [_stateMachine addEvents:@[connectedEvent, disconnectionEvent, errorEvent, connectingEvent]];
@@ -115,6 +115,9 @@ static NSString* const kEventDisconnection= @"kEventDisconnection";
     }];
     
     [disconnectionState setDidEnterStateBlock:^(TKState *state, TKTransition *transition) {
+        if (transition.sourceState) {
+           [wSelf closeAllStream];
+        }
         [wSelf didDisconnection:transition.userInfo];
     }];
 }
@@ -151,7 +154,7 @@ static NSString* const kEventDisconnection= @"kEventDisconnection";
 - (void) enterErrorState:(NSDictionary*) userInfo
 {
     DDLogInfo(@"Enter Error State %@", userInfo);
-    [self close];
+    [self closeAllStream];
     NSError* error = userInfo[@"error"];
     if (error.code == kYHNetErrorTimeOut) {
         [_stateMachine fireEvent:kEventDisconnection userInfo:userInfo error:nil];
@@ -505,7 +508,7 @@ static NSString* const kEventDisconnection= @"kEventDisconnection";
 
 }
 
-- (void) close
+- (void) closeAllStream
 {
     DDLogError(@"连接关闭");
     [self invalideOpenTimeOut];
@@ -519,8 +522,16 @@ static NSString* const kEventDisconnection= @"kEventDisconnection";
     [_readStream close];
     _flag &= 0x0;
     _socketStatus = YHScketDisconnected;
+
 }
 
+- (void) close
+{
+    NSError* error;
+    [_stateMachine fireEvent:kEventDisconnection userInfo:nil error:&error];
+    if (error) {
+        DDLogError(@"扭转状态为关闭态失败%@",error);
+    }}
 ////////////////////////////////////////////////////
 #pragma Retry
 ////////////////////////////////////////////////////
