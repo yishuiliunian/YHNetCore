@@ -271,6 +271,7 @@ static NSString* const kEventDisconnection= @"kEventDisconnection";
     NSError* error = [NSError YH_Error:kCFSocketTimeout reason:@"链接服务器超时，服务器跑路了！"];
     [_stateMachine fireEvent:kEventErrorOccur userInfo:@{@"error":error} error:nil];
     [self invalideOpenTimeOut];
+    DDLogError(@"创建连接失败超时，无法创建连接");
 }
 
 - (void) invalideOpenTimeOut
@@ -278,10 +279,12 @@ static NSString* const kEventDisconnection= @"kEventDisconnection";
     [_connectionTimeOutTimer invalidate];
     [YHNetRunloop removeTimer:_connectionTimeOutTimer];
     _connectionTimeOutTimer = nil;
+    DDLogInfo(@"关闭创建连接超时Timer");
 }
 
 - (void) openSuccess
 {
+    DDLogInfo(@"连接建立成功，🎀");
     [self invalideOpenTimeOut];
     [self stopRetry];
     if ((_flag & kDidCompleteOpenForRead) && (_flag & kDidCompleteOpenForWrite) ) {
@@ -298,6 +301,7 @@ static NSString* const kEventDisconnection= @"kEventDisconnection";
     }else if (aStream == _readStream) {
         [self readStream:_readStream handleEvent:eventCode];
     } else {
+        DDLogError(@"发生错误的流既不是输入流也不是输出流，我操，什么鬼！！！");
         //error
     }
 }
@@ -376,13 +380,18 @@ static NSString* const kEventDisconnection= @"kEventDisconnection";
             [self readBytes];
             break;
         // if error occurred the close the stream and socket;
+            
+        case NSStreamEventEndEncountered:
+        {
+            DDLogError(@"读入流被结束了");
+        }
         case NSStreamEventErrorOccurred:
         {
             DDLogError(@"读入流发生问题%@",[stream streamError]);
             [self closeWithError:[stream streamError]];
         }
             break;
-        case NSStreamEventEndEncountered:
+
         case NSStreamEventNone:
         {
             DDLogError(@"读入流触发其他状态%d", eventCode);
@@ -404,6 +413,11 @@ static NSString* const kEventDisconnection= @"kEventDisconnection";
         case NSStreamEventHasSpaceAvailable:
             break;
         // if error occurred the close the stream and socket;
+        case NSStreamEventEndEncountered:
+        {
+            
+            DDLogError(@"写入流被结束了");
+        }
         case NSStreamEventErrorOccurred:
         default:
             {
