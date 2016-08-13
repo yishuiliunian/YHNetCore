@@ -28,6 +28,29 @@ NSString* const kYHSkeyInvalidNotification = @"kYHSkeyInvalidNotification";
 @implementation YHRequest
 @synthesize startReqeustTime = _startReqeustTime;
 
+
++ (NSString*) DefaultUserAgentInfo
+{
+    static NSDictionary* userAgent = nil;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        NSDictionary *infoDic = [[NSBundle mainBundle] infoDictionary];
+        NSString *appVersion = [infoDic objectForKey:@"CFBundleShortVersionString"];
+        
+        userAgent = @{
+                      @"c_type" : @"2",
+                      @"c_version" : appVersion?:@"",
+                      };
+        
+    });
+    return userAgent;
+}
+
+- (void) addCommonHeader
+{
+    [_allHeaders addEntriesFromDictionary:[YHRequest DefaultUserAgentInfo]];
+}
+
 - (instancetype) init
 {
     self = [super init];
@@ -39,6 +62,7 @@ NSString* const kYHSkeyInvalidNotification = @"kYHSkeyInvalidNotification";
     _allHeaders = [NSMutableDictionary new];
     _b_oneway = NO;
     _responseClass = [SimpleResponse class];
+    [self addCommonHeader];
     return self;
 }
 
@@ -56,7 +80,6 @@ NSString* const kYHSkeyInvalidNotification = @"kYHSkeyInvalidNotification";
 }
 - (void) notifyResponseError:(NSError*)error
 {
-    
     if (_canceled) {
         return;
     }

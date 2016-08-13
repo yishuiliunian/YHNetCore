@@ -30,14 +30,16 @@
 #import "YHNetRunloop.h"
 #import "YHRequest_Timeout.h"
 #import "YHMessageSyncCenter.h"
-
-@interface YHNetClient () <YHNetSocketConnectionDelegate, YHHearterServiceDelegate>
+#import "YHNetStatus.h"
+@interface YHNetClient () <YHNetSocketConnectionDelegate>
 {
     YHNetSocketConnection* _connection;
     NSMutableDictionary* _requestCache;
     YHNetResponseDispatch* _pushHanlder;
     YHHearterService* _heaterService;
     
+    NSInteger _timeOutCount;
+    NSTimeInterval _lastTimeOutTimeSpace;
     /**
      *  每隔0.1s检查一下_sendQueue中的请求是否存在超时的，存在超时的请求则进行清除操作
      */
@@ -69,7 +71,6 @@
     _requestCache = [NSMutableDictionary new];
     //
     _heaterService = [YHHearterService new];
-    _heaterService.delegate = self;
     //
     _pushHanlder = [YHNetResponseDispatch new];
     [_pushHanlder registerHandler:[[YHPushMessageHanlder alloc] init]];
@@ -103,10 +104,9 @@
     [YHNetRunloop addTimer:_timeoutTimer ];
 }
 
-- (void) heartServiceOccurCloseError:(YHHearterService *)service
-{
-    [_connection close];
-}
+
+
+
 - (void) stopTimeoutTimer
 {
     [_timeoutTimer invalidate];
@@ -126,6 +126,9 @@
                 [willTimeOutRequests addObject:key];
                 if (!req.b_oneway) {
                     [req onError:[NSError YH_Error:kYHNetErrorTimeOut reason:@"服务好长时间没反应，跑路了？"]];
+                    _timeOutCount ++;
+                    _lastTimeOutTimeSpace = CFAbsoluteTimeGetCurrent() - _lastTimeOutTimeSpace;
+                    [self checkWillReconnection];
                 }
             }
         }
@@ -133,6 +136,26 @@
         DDLogInfo(@"Check timeout");
     }
     [self tryStopTimeoutTimer];
+}
+
+- (void) checkWillReconnection
+{
+    DDLogInfo(@"检查是否需要重置链接");
+    if (_lastTimeOutTimeSpace < 30 && _timeOutCount > 2) {
+        if ([YHNetStatus shareInstance].currentStatus != NotReachable) {
+            DDLogInfo(@"需要重置链接，进行链接重置操作,当前有网络");
+            [_connection close];
+            NSError* error;
+            [_connection open:&error];
+            if (error) {
+                DDLogError(@"打开链接失败%@",error);
+            }
+            _timeOutCount ==0;
+        } else {
+            DDLogInfo(@"当前没有网络，不进行链接重置操作");
+        }
+    
+    }
 }
 
 - (void) tryStartTimeoutTimer
@@ -164,6 +187,11 @@
 
 - (void) performRequest:(YHRequest *)request
 {
+    if ([YHNetStatus shareInstance].currentStatus == NotReachable) {
+        NSError* error = [NSError YH_Error:kYHNetNotnetwork reason:@"没有网络链接，请检查网络!"];
+        [request onError:error];
+        return;
+    }
     YHCmd* cmd = [YHCmd cmdWithServant:request.servant method:request.method];
     YHSendMessage* msg = [_connection messageWithCMD:cmd data:request.requestData.data headers:request.requestHeader];
     msg.doOneWay = request.b_oneway;

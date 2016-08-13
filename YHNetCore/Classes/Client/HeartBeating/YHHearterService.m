@@ -173,9 +173,7 @@ static NSString* const kKAEventActive = @"kKAEventActive";
         if (_errorCount < 2) {
             [self forceBeating];
         } else {
-            if ([self.delegate respondsToSelector:@selector(heartServiceOccurCloseError:)]) {
-                [self.delegate heartServiceOccurCloseError:self];
-            }
+ 
         }
     }
 }

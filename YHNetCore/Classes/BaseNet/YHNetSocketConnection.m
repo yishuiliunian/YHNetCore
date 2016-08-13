@@ -93,7 +93,7 @@ static NSString* const kEventDisconnection= @"kEventDisconnection";
     TKEvent* connectingEvent = [TKEvent eventWithName:kEventConnect transitioningFromStates:@[disconnectionState, errorState] toState:connectingState];
     TKEvent* connectedEvent = [TKEvent eventWithName:kEventConnected transitioningFromStates:@[connectingState] toState:connectionState];
     TKEvent* errorEvent = [TKEvent eventWithName:kEventErrorOccur transitioningFromStates:@[connectingState, connectionState] toState:errorState];
-    TKEvent* disconnectionEvent = [TKEvent eventWithName:kEventDisconnection transitioningFromStates:@[connectionState,connectingState,errorState] toState:disconnectionState];
+    TKEvent* disconnectionEvent = [TKEvent eventWithName:kEventDisconnection transitioningFromStates:@[connectionState,errorState] toState:disconnectionState];
     
     [_stateMachine addStates:@[connectionState, errorState, connectingState, disconnectionState]];
     [_stateMachine addEvents:@[connectedEvent, disconnectionEvent, errorEvent, connectingEvent]];

@@ -9,8 +9,9 @@
 #import <Foundation/Foundation.h>
 
 typedef NS_ENUM(NSInteger, YHNetErrorCode) {
-    kYHNetErrorTimeOut = -8000,
-    kYHNetActiveDisconnect = -8001
+    kYHNetErrorTimeOut = -8000,//超时错误
+    kYHNetActiveDisconnect = -8001,//没有活跃链接
+    kYHNetNotnetwork = -8002 //没有网络
 };
 
 @interface NSError (YHNetError)
