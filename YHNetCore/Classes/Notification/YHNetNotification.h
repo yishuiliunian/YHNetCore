@@ -11,7 +11,7 @@
 
 DZExternObserverMessage(NewServerMessage);
 DZExternObserverMessage(NetworkChanged)
-
+DZExternObserverMessage(NetworkSocketStatusChanged);
 
 @class YHNetStatusChangeEvent;
 @interface NSDictionary (YHNetCoreNotificationDecode)

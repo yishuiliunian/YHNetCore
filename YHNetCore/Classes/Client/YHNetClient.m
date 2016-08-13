@@ -84,6 +84,10 @@
     return self;
 }
 
+- (YHNetSocketConnection*) currentSocketConnection
+{
+    return _connection;
+}
 - (void) onAccountResign
 {
     DDLogInfo(@"网络层捕获到用户退出操作，关闭网络链接");
@@ -133,7 +137,6 @@
             }
         }
         [_requestCache removeObjectsForKeys:willTimeOutRequests];
-        DDLogInfo(@"Check timeout");
     }
     [self tryStopTimeoutTimer];
 }
@@ -154,7 +157,6 @@
         } else {
             DDLogInfo(@"当前没有网络，不进行链接重置操作");
         }
-    
     }
 }
 
@@ -218,6 +220,10 @@
     [self tryStopTimeoutTimer];
     return request;
 }
+- (void) connectionWillOpen:(YHNetSocketConnection *)connection
+{
+    DZPostNetworkSocketStatusChanged(@{});
+}
 
 - (void) connectionDidOpen:(YHNetSocketConnection *)connection
 {
@@ -226,11 +232,13 @@
         [_heaterService forceBeating];
         [[YHMessageSyncCenter shareCenter] syncMessage:0];
     }
+    DZPostNetworkSocketStatusChanged(@{});
 }
 
 - (void) connectionDidClose:(YHNetSocketConnection *)connection
 {
     [_heaterService stopBeating];
+    DZPostNetworkSocketStatusChanged(@{});
 }
 
 - (void) connection:(YHNetSocketConnection *)connection getFromMessage:(YHFromMessage *)message
@@ -238,7 +246,7 @@
     if (connection != _connection) {
         return;
     }
- 
+    _timeOutCount = 0;
     DDLogInfo(@"从服务器得到响应SEQ[%D],\%@", message.seq, message.cmd);
     YHRequest* request = [self takeRequestWithSEQ:message.seq];
     if (request) {
