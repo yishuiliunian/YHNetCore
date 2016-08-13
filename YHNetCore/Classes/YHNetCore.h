@@ -15,4 +15,5 @@
 #import <NetContants/NetContants.h>
 #import <YHProtoBuff/YHProtoBuff.h>
 #import "YHNetClient.h"
+#import "YHNetStatus.h"
 #endif /* YHNetCore_h */

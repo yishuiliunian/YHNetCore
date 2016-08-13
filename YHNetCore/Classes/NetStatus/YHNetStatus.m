@@ -9,6 +9,11 @@
 #import "YHNetStatus.h"
 #import "YHDNS.h"
 #import "YHNetNotification.h"
+@interface YHNetStatus ()
+{
+    NetworkStatus _originNetStatus;
+}
+@end
 @implementation YHNetStatus
 + (YHNetStatus*) shareInstance
 {
@@ -29,8 +34,13 @@
     _reachalility = [Reachability reachabilityWithHostName:[YHDNS shareDNS].yaoheHost.ip];
     [_reachalility startNotifier];
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(networkChanged:) name:kReachabilityChangedNotification object:nil];
-    _currentStatus = _reachalility.currentReachabilityStatus;
+    _originNetStatus = _reachalility.currentReachabilityStatus;
     return self;
+}
+
+- (NetworkStatus) currentStatus
+{
+    return _reachalility.currentReachabilityStatus;
 }
 
 - (void) networkChanged:(NSNotification*)nc
@@ -39,12 +49,12 @@
         return;
     }
     YHNetStatusChangeEvent* event = [YHNetStatusChangeEvent new];
-    event.originStatus = _currentStatus;
+    event.originStatus = _originNetStatus;
     event.aimStatus = _reachalility.currentReachabilityStatus;
     NSMutableDictionary* userInfo = [NSMutableDictionary new];
     [userInfo setNetStatusChangEvent:event];
     DZPostNetworkChanged(userInfo);
-    _currentStatus = event.aimStatus;
+    _originNetStatus = event.aimStatus;
 }
 
 @end
