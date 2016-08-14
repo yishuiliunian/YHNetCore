@@ -48,11 +48,6 @@
 }
 - (void) onNetSuccess:(SyncMsgResponse*)object
 {
-    
-    
-
     [super onNetSuccess:object];
-    
-
 }
 @end
