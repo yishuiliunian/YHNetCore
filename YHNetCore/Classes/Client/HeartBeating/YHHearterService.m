@@ -152,7 +152,6 @@ static NSString* const kKAEventActive = @"kKAEventActive";
     }
     YHHeartRequest* request = [YHHeartRequest new];
     request.skey = DZActiveAuthSession.token;
-    request.heartBeat.userName = DZActiveAuthSession.userID;
     request.heartBeat.allowPush = 1;
     request.delegate = self;
     [request start];

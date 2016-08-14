@@ -7,7 +7,7 @@
 //
 
 #import "YHHeartRequest.h"
-
+#import "RpcMessage.pbobjc.h"
 @implementation YHHeartRequest
 
 - (instancetype) init
@@ -16,7 +16,7 @@
     if (!self) {
         return self;
     }
-    _responseClass = [HeartBeatResponse class];
+    _responseClass = [SimpleResponse class];
     return self;
 }
 
@@ -43,7 +43,7 @@
     [super onError:error];
 }
 
-- (void) onNetSuccess:(HeartBeatResponse*)object
+- (void) onNetSuccess:(SimpleResponse*)object
 {
     [super onNetSuccess:object];
 }
