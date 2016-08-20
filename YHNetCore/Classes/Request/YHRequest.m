@@ -38,7 +38,7 @@ NSString* const kYHSkeyInvalidNotification = @"kYHSkeyInvalidNotification";
         NSString *appVersion = [infoDic objectForKey:@"CFBundleShortVersionString"];
         
         userAgent = @{
-                      @"c_type" : @"2",
+                      @"c_os" : @"1",
                       @"c_version" : appVersion?:@"",
                       };
         
