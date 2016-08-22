@@ -40,6 +40,9 @@ NSString* const kYHSkeyInvalidNotification = @"kYHSkeyInvalidNotification";
         userAgent = @{
                       @"c_os" : @"1",
                       @"c_version" : appVersion?:@"",
+#ifdef DEBUG
+                      @"c_debug" : @"1",
+#endif
                       };
         
     });
