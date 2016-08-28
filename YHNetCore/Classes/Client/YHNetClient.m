@@ -31,6 +31,7 @@
 #import "YHRequest_Timeout.h"
 #import "YHMessageSyncCenter.h"
 #import "YHNetStatus.h"
+#import "YHRequest_SendIntereact.h"
 @interface YHNetClient () <YHNetSocketConnectionDelegate>
 {
     YHNetSocketConnection* _connection;
@@ -220,6 +221,22 @@
     [self tryStopTimeoutTimer];
     return request;
 }
+
+- (void) connection:(YHNetSocketConnection *)connection didSendMessage:(YHSendMessage *)message withError:(NSError *)error
+{
+    if (error) {
+        YHRequest* request = [self takeRequestWithSEQ:message.seq];
+        [request onError:error];
+    } else {
+        YHRequest* request = nil;
+        @synchronized (_requestCache) {
+            request = _requestCache[@(message.seq)];
+            request.connectionSEQ = connection.connectionSEQ;
+        }
+
+    }
+
+}
 - (void) connectionWillOpen:(YHNetSocketConnection *)connection
 {
     DZPostNetworkSocketStatusChanged(@{});
@@ -235,8 +252,27 @@
     DZPostNetworkSocketStatusChanged(@{});
 }
 
+- (void) clearRequstOnCloseConnection:(YHNetSocketConnection*)connection
+{
+    
+    @synchronized (_requestCache) {
+        int64_t connectionID = connection.connectionSEQ;
+        NSArray* allSEQs = _requestCache.allKeys;
+        NSMutableArray* willClearSEQ = [NSMutableArray new];
+        for (NSNumber* seq  in allSEQs) {
+            YHRequest* req = _requestCache[self];
+            if (req.connectionSEQ == connectionID) {
+                [willClearSEQ addObject:seq];
+                NSError* error = [NSError YH_Error:kYHNetSendButConnectionClose reason:@"请求已发出，但链接断开，无法接受回文"];
+                [req onError:error];
+            }
+        }
+        [_requestCache removeObjectsForKeys:willClearSEQ];
+    }
+}
 - (void) connectionDidClose:(YHNetSocketConnection *)connection
 {
+    [self clearRequstOnCloseConnection:connection];
     [_heaterService stopBeating];
     DZPostNetworkSocketStatusChanged(@{});
 }

@@ -15,6 +15,7 @@
 #import "YHNetRunloop.h"
 #import <DZLogger/DZLogger.h>
 #import "YHRequest_Timeout.h"
+#import "YHRequest_SendIntereact.h"
 NSString* const kYHSkeyInvalidNotification = @"kYHSkeyInvalidNotification";
 
 @interface YHRequest ()
@@ -27,7 +28,7 @@ NSString* const kYHSkeyInvalidNotification = @"kYHSkeyInvalidNotification";
 
 @implementation YHRequest
 @synthesize startReqeustTime = _startReqeustTime;
-
+@synthesize connectionSEQ = _connectionSEQ;
 
 + (NSString*) DefaultUserAgentInfo
 {
@@ -65,6 +66,7 @@ NSString* const kYHSkeyInvalidNotification = @"kYHSkeyInvalidNotification";
     _allHeaders = [NSMutableDictionary new];
     _b_oneway = NO;
     _responseClass = [SimpleResponse class];
+    _connectionSEQ = 0;
     [self addCommonHeader];
     return self;
 }

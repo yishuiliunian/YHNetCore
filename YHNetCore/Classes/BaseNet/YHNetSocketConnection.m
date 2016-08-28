@@ -102,6 +102,8 @@ static NSString* const kEventDisconnection= @"kEventDisconnection";
     
     __weak typeof(self) wSelf = self;
     
+  
+    
     [connectingState setDidEnterStateBlock:^(TKState *state, TKTransition *transition) {
         [wSelf startConnecting];
     }];
@@ -138,6 +140,7 @@ static NSString* const kEventDisconnection= @"kEventDisconnection";
 - (void) socketConnected
 {
     _socketStatus = YHScketConnected;
+    _connectionSEQ ++;
     if ([self.delegate respondsToSelector:@selector(connectionDidOpen:)]) {
         [self.delegate connectionDidOpen:self];
     }
@@ -155,6 +158,9 @@ static NSString* const kEventDisconnection= @"kEventDisconnection";
 {
     DDLogInfo(@"Enter Error State %@", userInfo);
     [self closeAllStream];
+    if ([self.delegate respondsToSelector:@selector(connectionDidClose:)]) {
+        [self.delegate connectionDidClose:self];
+    }
     NSError* error = userInfo[@"error"];
     if (error.code == kYHNetErrorTimeOut) {
         [_stateMachine fireEvent:kEventDisconnection userInfo:userInfo error:nil];
@@ -219,6 +225,7 @@ static NSString* const kEventDisconnection= @"kEventDisconnection";
     [NSThread detachNewThreadSelector:@selector(scheduleSend) toTarget:self withObject:nil];
     _endPoint = point;
     [self installNotification];
+    _connectionSEQ = 13534;
     
     return self;
 }
@@ -494,10 +501,15 @@ static NSString* const kEventDisconnection= @"kEventDisconnection";
                     }
                     
                     NSData* data = [YHCodecWrapper encode:msg];
-                    [_writeStream write:[data bytes] maxLength:data.length];
                     
-                    if ([self.delegate respondsToSelector:@selector(connection:didSendMessage:)]) {
-                        [self.delegate connection:self didSendMessage:msg];
+                   NSInteger ret =  [_writeStream write:[data bytes] maxLength:data.length];
+                    
+                    if ([self.delegate respondsToSelector:@selector(connection:didSendMessage:withError:)]) {
+                        if (ret < 0) {
+                            [self.delegate connection:self didSendMessage:msg withError:_writeStream.streamError];
+                        } else {
+                            [self.delegate connection:self didSendMessage:msg withError:nil];
+                        }
                     }
 #ifdef DEBUG
                     NSLog(@"Send Message %d , %@", msg.seq, msg.cmd);

@@ -51,7 +51,7 @@ typedef NS_ENUM(NSInteger, YHSocketStatus) {
 - (void) connection:(YHNetSocketConnection*)connection getFromMessage:(YHFromMessage*)message;
 - (void) connection:(YHNetSocketConnection*)connection enqueueSendMessage:(YHSendMessage*)massage;
 - (void) connection:(YHNetSocketConnection*)connection willSendMessage:(YHSendMessage*)message;
-- (void) connection:(YHNetSocketConnection*)connection didSendMessage:(YHSendMessage*)message;
+- (void) connection:(YHNetSocketConnection*)connection didSendMessage:(YHSendMessage*)message withError:(NSError*)error;
 @end
 
 @interface YHNetSocketConnection : NSObject
@@ -63,6 +63,10 @@ typedef NS_ENUM(NSInteger, YHSocketStatus) {
 @property (nonatomic, assign, readonly) YHNetConnectionFlag flag;
 @property (nonatomic, assign) NSTimeInterval timeout;
 @property (nonatomic, assign, readonly) YHSocketStatus socketStatus;
+/**
+ *  链接序列号，每次建立新的链接，都会递增一，不同的链接该序列号不同
+ */
+@property (nonatomic, assign, readonly) int64_t connectionSEQ;
 - (instancetype) initWithEndPoint:(YHEndPoint*)point;
 /**
  *  尝试打开连接
