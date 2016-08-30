@@ -15,6 +15,10 @@
 }
 @end
 @implementation YHNetStatus
+- (void) dealloc
+{
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
+}
 + (YHNetStatus*) shareInstance
 {
     static YHNetStatus* status;

@@ -49,7 +49,10 @@
 @end
 
 @implementation YHNetClient
-
+- (void) dealloc
+{
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
+}
 + (YHNetClient*)shareClient
 {
     static YHNetClient* client = nil;
