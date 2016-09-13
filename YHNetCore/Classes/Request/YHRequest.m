@@ -16,6 +16,7 @@
 #import <DZLogger/DZLogger.h>
 #import "YHRequest_Timeout.h"
 #import "YHRequest_SendIntereact.h"
+#import "DZGlobalEnv.h"
 NSString* const kYHSkeyInvalidNotification = @"kYHSkeyInvalidNotification";
 
 @interface YHRequest ()
@@ -45,7 +46,7 @@ NSString* const kYHSkeyInvalidNotification = @"kYHSkeyInvalidNotification";
                       @"c_debug" : @"1",
 #endif
                       };
-        
+
     });
     return userAgent;
 }
@@ -53,6 +54,9 @@ NSString* const kYHSkeyInvalidNotification = @"kYHSkeyInvalidNotification";
 - (void) addCommonHeader
 {
     [_allHeaders addEntriesFromDictionary:[YHRequest DefaultUserAgentInfo]];
+    if (DEBUG_DZGlobalEnv) {
+        _allHeaders[@"c_debug"] = @"1";
+    }
 }
 
 - (instancetype) init
