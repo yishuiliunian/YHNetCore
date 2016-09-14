@@ -26,7 +26,7 @@
         return self;
     }
     _yaoheHost = [YHHost new];
-    _yaoheHost.hostName = @"yaohe.com";
+    _yaoheHost.hostName = @"server.8mclub.com";
     _yaoheHost.ip = @"182.254.232.60";
     _yaoheHost.port = @"10010";
     return self;

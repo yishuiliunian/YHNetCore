@@ -249,7 +249,7 @@ static NSString* const kEventDisconnection= @"kEventDisconnection";
     }
     CFReadStreamRef  readStream = (__bridge CFReadStreamRef)_readStream;
     CFWriteStreamRef writeStream = (__bridge CFWriteStreamRef)_writeStream;
-    CFStreamCreatePairWithSocketToHost(NULL, (__bridge CFStringRef)self.endPoint.host, [self.endPoint.port intValue], &readStream, &writeStream);
+    CFStreamCreatePairWithSocketToHost(kCFAllocatorDefault, (__bridge CFStringRef)self.endPoint.host, [self.endPoint.port intValue], &readStream, &writeStream);
 
     _readStream = (__bridge NSInputStream *)(readStream);
     _writeStream = (__bridge NSOutputStream*)(writeStream);
