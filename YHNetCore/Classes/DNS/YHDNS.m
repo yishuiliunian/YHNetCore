@@ -27,7 +27,7 @@
     }
     _yaoheHost = [YHHost new];
     _yaoheHost.hostName = @"server.8mclub.com";
-    _yaoheHost.ip = @"182.254.232.60";
+    _yaoheHost.ip = @"120.76.215.1";
     _yaoheHost.port = @"10010";
     return self;
 }

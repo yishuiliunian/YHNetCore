@@ -69,7 +69,7 @@
         return self;
     }
     YHHost* host = [YHDNS shareDNS].yaoheHost;
-    YHEndPoint* endP0int = [[YHEndPoint alloc] initWithHost:host.ip port:host.port];
+    YHEndPoint* endP0int = [[YHEndPoint alloc] initWithHost:host.hostName port:host.port];
     _connection = [[YHNetSocketConnection alloc] initWithEndPoint:endP0int];
     _connection.delegate = self;
     _requestCache = [NSMutableDictionary new];
