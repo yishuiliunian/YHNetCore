@@ -529,7 +529,9 @@ static NSString* const kEventDisconnection= @"kEventDisconnection";
 
 - (void) closeWithError:(NSError*)error
 {
-    
+    if (!error) {
+        error = [NSError YH_Error:-9999 reason:@"network error unkonwn!!!"];
+    }
     [_stateMachine fireEvent:kEventErrorOccur userInfo:@{@"error":error} error:nil];
 
 }
