@@ -69,6 +69,7 @@
         return self;
     }
     YHHost* host = [YHDNS shareDNS].yaoheHost;
+#undef DEBUG
 #ifdef DEBUG
     YHEndPoint* endP0int = [[YHEndPoint alloc] initWithHost:host.ip port:host.port];
 #else
