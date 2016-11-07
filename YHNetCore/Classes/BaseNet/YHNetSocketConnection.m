@@ -210,7 +210,7 @@ static NSString* const kEventDisconnection= @"kEventDisconnection";
         return self;
     }
     _flag = 0;
-    _timeout = 40;
+    _timeout = 25;
     _sendQueue = [NSMutableArray new];
     _readBuffer = nil;
     _socketStatus = YHScketDisconnected;

@@ -17,6 +17,7 @@
 #import "YHRequest_Timeout.h"
 #import "YHRequest_SendIntereact.h"
 #import "DZGlobalEnv.h"
+#import "YHNetStatus.h"
 NSString* const kYHSkeyInvalidNotification = @"kYHSkeyInvalidNotification";
 
 @interface YHRequest ()
@@ -66,7 +67,7 @@ NSString* const kYHSkeyInvalidNotification = @"kYHSkeyInvalidNotification";
         return self;
     }
     _canceled = NO;
-    _timeout = 30;
+    _timeout = 20;
     _allHeaders = [NSMutableDictionary new];
     _b_oneway = NO;
     _responseClass = [SimpleResponse class];
