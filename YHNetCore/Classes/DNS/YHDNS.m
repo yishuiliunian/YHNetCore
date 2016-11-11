@@ -27,12 +27,14 @@
     }
     _yaoheHost = [YHHost new];
     _yaoheHost.hostName = @"server.8mclub.com";
-#ifdef DEBUG
-    _yaoheHost.ip = @"182.254.232.60";
-#else
     _yaoheHost.ip = @"120.76.215.1";
-#endif
     _yaoheHost.port = @"10010";
+    
+    _debugHost = [YHHost new];
+    _debugHost.hostName = @"server.8mclub.com";
+    _debugHost.ip = @"182.254.232.60";
+    _debugHost.port = @"10010";
+    
     return self;
 }
 @end
