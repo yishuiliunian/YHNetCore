@@ -141,7 +141,6 @@ NSString* const kYHSkeyInvalidNotification = @"kYHSkeyInvalidNotification";
     }
     [self endRequest];
     [self notifyResponseError:error];
-
 }
 
 - (void) onNetSuccess:(id)object

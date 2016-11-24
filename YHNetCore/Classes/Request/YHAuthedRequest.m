@@ -7,7 +7,7 @@
 //
 
 #import "YHAuthedRequest.h"
-
+#import "NSError+YHNetError.h"
 @implementation YHAuthedRequest
 
 - (void) setSkey:(NSString *)skey
@@ -18,5 +18,16 @@
 - (NSString*) skey
 {
     return self.requestHeader[@"skey"];
+}
+
+- (int64_t) start
+{
+    if (self.skey) {
+        return [super start];
+    } else {
+        NSError* error = [NSError YH_Error:-400 reason:@"当前SKEY为空，不能进行需要授权的网络请求"];
+        [self onError:error];
+        return -1;
+    }
 }
 @end

@@ -14,7 +14,7 @@ typedef NS_ENUM(NSInteger, YHNetErrorCode) {
     kYHNetNotnetwork = -8002 ,//没有网络
     kYHNetSendButConnectionClose = -8100,//数据上行请求发出去了，但是链接断开了，就收不到回报数据了
 };
-
+FOUNDATION_EXTERN NSString* const YHNetErrorDomain;
 @interface NSError (YHNetError)
 
 + (NSError*) YH_Error:(int)code reason:(NSString*)reason;

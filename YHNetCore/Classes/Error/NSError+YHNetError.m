@@ -7,7 +7,7 @@
 //
 
 #import "NSError+YHNetError.h"
-static NSString* const YHNetErrorDomain = @"com.yaohe.net.error";
+ NSString* const YHNetErrorDomain = @"com.yaohe.net.error";
 
 @implementation NSError (YHNetError)
 
