@@ -11,6 +11,8 @@
 #import "DZAuthSession.h"
 #import "YHAcquirRequest.h"
 #import "YHNetNotification.h"
+#import "YHMessageSyncCenter.h"
+
 @implementation YHPushMessageHanlder
 - (instancetype) init
 {
@@ -38,15 +40,8 @@
 
 - (void) onHandleObject:(PushMsgRequest*)object
 {
-  
-   NSArray* messages = [YHActiveDBConnection updateMessagesFromServer:object.msgArray];
  
-    if (messages.count) {
-        DZPostNewServerMessage(@{
-                                 @"messages":[messages copy],
-                                 });
-    }
-    
+    [[YHMessageSyncCenter shareCenter] reciveRemoteMessages:object.msgArray];
     YHAcquirRequest* req = [YHAcquirRequest new];
     req.acquire.cookieId = object.cookieId;
     req.b_oneway = YES;

@@ -11,4 +11,6 @@
 @interface YHMessageSyncCenter : NSObject
 + (YHMessageSyncCenter*) shareCenter;
 - (void) syncMessage:(int64_t)cookieId;
+
+- (void) reciveRemoteMessages:(NSArray*)msgs;
 @end

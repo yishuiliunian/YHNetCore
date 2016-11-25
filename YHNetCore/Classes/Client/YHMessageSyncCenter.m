@@ -14,6 +14,7 @@
 #import "YHAcquirRequest.h"
 #import "YHNetNotification.h"
 #import <DZLogger.h>
+#import "YHURLRouteDefines.h"
 
 @interface YHMessageSyncCenter ()
 @property (nonatomic, assign) int64_t lastCookiedId;
@@ -51,13 +52,7 @@
         if (object.cookieId != 0) {
             weakSelf.lastCookiedId = object.cookieId;
         }
-        NSArray* messages = [YHActiveDBConnection updateMessagesFromServer:object.msgArray];
-        if (messages.count) {
-            DZPostNewServerMessage(@{
-                                     @"messages":[messages copy],
-                                     });
-        }
-        
+        [weakSelf reciveRemoteMessages:object.msgArray];
         DDLogInfo(@"进行消息确认!");
         YHAcquirRequest* req = [YHAcquirRequest new];
         req.acquire.cookieId = object.cookieId;
@@ -68,5 +63,44 @@
     }];
     
     [sync start];
+}
+- (NSArray*) fliteEventRemoteMessage:(NSArray*)msgs
+{
+    NSMutableArray* dbMsgs = [NSMutableArray new];
+    NSMutableArray* eventMsgs = [NSMutableArray new];
+    for (Msg* msg in msgs) {
+        if (msg.msgType == MsgType_Event) {
+            [eventMsgs addObject:msg];
+        } else {
+            [dbMsgs addObject:msg];
+        }
+    }
+    [self handleEventMessage:eventMsgs];
+    return dbMsgs;
+}
+
+- (void) handleEventMessage:(NSArray*)msgs
+{
+    for (Msg* msg in msgs) {
+        DZRouteRequestContext* context = [DZRouteRequestContext new];
+        Event* event = [Event parseFromData:msg error:nil];
+        [context setValue:event forKey:@"event"];
+        
+        NSURL* url = DZURLRouteQueryLink(kYHURLEventHandler, @{});
+        [[DZURLRoute defaultRoute] locationResource:url context:context redirect404:NO];
+    }
+}
+
+
+- (void) reciveRemoteMessages:(NSArray*)msgs
+{
+    msgs = [self fliteEventRemoteMessage:msgs];
+    NSArray* messages = [YHActiveDBConnection updateMessagesFromServer:msgs];
+    if (messages.count) {
+        DZPostNewServerMessage(@{
+                                 @"messages":[messages copy],
+                                 });
+    }
+    
 }
 @end
