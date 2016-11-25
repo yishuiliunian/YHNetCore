@@ -16,4 +16,5 @@
 #import <YHProtoBuff/YHProtoBuff.h>
 #import "YHNetClient.h"
 #import "YHNetStatus.h"
+#import "YHSyncMsgRequest.h"
 #endif /* YHNetCore_h */
