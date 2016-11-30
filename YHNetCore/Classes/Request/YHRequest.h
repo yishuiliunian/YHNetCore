@@ -8,23 +8,17 @@
 
 #import <Foundation/Foundation.h>
 #import "YHFromMessage.h"
-
+#import "YHBaseRequest.h"
 extern NSString* const kYHSkeyInvalidNotification ;
-@class YHRequest;
-@protocol YHRequestHandler<NSObject>
-- (void) yh_request:(YHRequest*)request onError:(NSError*)error;
-- (void) yh_request:(YHRequest *)request onSuccess:(id)object;
-@end
+
 
 @class GPBMessage;
-@interface YHRequest : NSObject
+@interface YHRequest : YHBaseRequest
 {
     @protected
     GPBMessage* _requestData;
     Class _responseClass;
 }
-@property (nonatomic, weak) NSObject<YHRequestHandler>* delegate;
-@property (nonatomic, assign, readonly) BOOL canceled;
 @property (nonatomic, assign, readonly) BOOL requesting;
 @property (nonatomic, assign, readonly) int64_t seq;
 @property (nonatomic, strong, readonly) NSDictionary* requestHeader;
@@ -34,22 +28,17 @@ extern NSString* const kYHSkeyInvalidNotification ;
 @property (nonatomic, assign) BOOL b_oneway;
 @property (nonatomic, assign) NSTimeInterval timeout;
 @property (nonatomic, strong) Class responseObjectClass;
-@property (nonatomic, strong) void(^errorHandler)(NSError* error) ;
-@property (nonatomic, strong) void(^successHanlder) (id object);
+
 @property (nonatomic, strong, readonly) YHFromMessage*  responseMessage;
 
-- (void) setErrorHandler:(void (^)(NSError * error))errorHandler;
-- (void) setSuccessHanlder:(void (^)(id object))successHanlder;
+
 - (void) addHeader:(NSString*)paramter forKey:(NSString*)key;
 
-- (void) notifyResponseError:(NSError*)error;
-- (void) notifyResponseSuccess:(id)object;
 
-- (void) cancel;
+
 @end
 
 @interface YHRequest ()
-- (int64_t) start;
 - (void) reciveRspMessage:(YHFromMessage*)mssage;
 @end
 

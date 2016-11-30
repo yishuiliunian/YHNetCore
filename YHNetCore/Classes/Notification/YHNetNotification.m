@@ -12,7 +12,7 @@
 DZObserverMessage(NewServerMessage)
 DZObserverMessage(NetworkChanged)
 DZObserverMessage(NetworkSocketStatusChanged)
-
+DZObserverMessage(FeedCommentEventArrive);
 
 static NSString* kYHNetCoreNotificationDecode = @"kYHNetCoreNotificationDecode";
 @implementation NSDictionary (YHNetCoreNotificationDecode)

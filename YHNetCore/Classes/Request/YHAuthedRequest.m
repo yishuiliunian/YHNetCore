@@ -20,14 +20,13 @@
     return self.requestHeader[@"skey"];
 }
 
-- (int64_t) start
+- (void) start
 {
     if (self.skey) {
-        return [super start];
+        [super start];
     } else {
         NSError* error = [NSError YH_Error:-400 reason:@"当前SKEY为空，不能进行需要授权的网络请求"];
         [self onError:error];
-        return -1;
     }
 }
 @end

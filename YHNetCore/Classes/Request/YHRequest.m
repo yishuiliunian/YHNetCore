@@ -66,7 +66,6 @@ NSString* const kYHSkeyInvalidNotification = @"kYHSkeyInvalidNotification";
     if (!self) {
         return self;
     }
-    _canceled = NO;
     _timeout = 20;
     _allHeaders = [NSMutableDictionary new];
     _b_oneway = NO;
@@ -87,49 +86,6 @@ NSString* const kYHSkeyInvalidNotification = @"kYHSkeyInvalidNotification";
 - (NSDictionary*) requestHeader
 {
     return [_allHeaders copy];
-}
-- (void) notifyResponseError:(NSError*)error
-{
-    if (_canceled) {
-        return;
-    }
-    void(^Action)(void) = ^(void) {
-        if ([self.delegate respondsToSelector:@selector(yh_request:onError:)]) {
-            [self.delegate yh_request:self onError:error];
-        }
-        
-        if (self.errorHandler) {
-            self.errorHandler(error);
-        }
-    };
-    if ([NSThread isMainThread]) {
-        Action();
-    } else {
-        dispatch_async(dispatch_get_main_queue(),Action);
-    }
-  
-}
-
-- (void) notifyResponseSuccess:(id)object
-{
-    if (_canceled) {
-        return;
-    }
-    void(^Action)(void) = ^(void) {
-        if ([self.delegate respondsToSelector:@selector(yh_request:onSuccess:)]) {
-            [self.delegate yh_request:self onSuccess:object];
-        }
-        
-        if (self.successHanlder) {
-            self.successHanlder(object);
-        }
-    };
-    if ([NSThread isMainThread]) {
-        Action();
-    } else {
-        dispatch_async(dispatch_get_main_queue(),Action);
-    }
-
 }
 - (void) onError:(NSError*)error
 {
@@ -181,10 +137,5 @@ NSString* const kYHSkeyInvalidNotification = @"kYHSkeyInvalidNotification";
     _requesting = NO;
 }
 
-
-- (void) cancel
-{
-    _canceled = YES;
-}
 
 @end

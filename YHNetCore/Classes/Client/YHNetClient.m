@@ -70,7 +70,7 @@
     }
     YHHost* host = [YHDNS shareDNS].yaoheHost;
     
-#undef DEBUG
+//#undef DEBUG
 #ifdef DEBUG
     host = [YHDNS shareDNS].debugHost;
 #endif
@@ -296,7 +296,7 @@
         return;
     }
     _timeOutCount = 0;
-    DDLogInfo(@"从服务器得到响应SEQ[%D],\%@", message.seq, message.cmd);
+    DDLogInfo(@"从服务器得到响应SEQ[%lld],%@", message.seq, message.cmd);
     YHRequest* request = [self takeRequestWithSEQ:message.seq];
     if (request) {
         [request reciveRspMessage:message];

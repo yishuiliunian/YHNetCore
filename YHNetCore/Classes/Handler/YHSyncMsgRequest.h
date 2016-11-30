@@ -28,7 +28,9 @@ typedef NS_ENUM(NSUInteger, TOAST_VALUE) {
 typedef NS_ENUM(NSUInteger, EVENT_VALUE) {
     EVENT_TROOP_MEMBER_KILL = 0x4001,//自己被踢
     EVENT_TROOP_CLOSE = 0x4002,//群关闭 = 事件 （非全员，群主不用收该事件） + 所有人收到关群的系统消息(包括群主)
-    EVENT_CLASS_CLOSE = 0x4010//班级解散 = 事件 （非全员，班长不用收该事件） + 所有人收到班级关闭的系统消息（包括班长）
+    EVENT_CLASS_CLOSE = 0x4010,//班级解散 = 事件 （非全员，班长不用收该事件） + 所有人收到班级关闭的系统消息（包括班长）
+    EVENT_COMMENT = 0x4040 , // 评论事件(0x4040: 评论)
+    EVENT_LIKE = 0x4050,// 点赞事件(0x4050: 点赞)
 };
 
 
