@@ -418,6 +418,9 @@ static NSString* const kEventDisconnection= @"kEventDisconnection";
             DDLogInfo(@"写入流建立连接");
             break;
         case NSStreamEventHasSpaceAvailable:
+        {
+            DDLogInfo(@"Write Stream has more space ☺");
+        }
             break;
         // if error occurred the close the stream and socket;
         case NSStreamEventEndEncountered:
@@ -502,8 +505,7 @@ static NSString* const kEventDisconnection= @"kEventDisconnection";
                     
                     NSData* data = [YHCodecWrapper encode:msg];
                     
-                   NSInteger ret =  [_writeStream write:[data bytes] maxLength:data.length];
-                    
+                    NSInteger ret =  [_writeStream write:[data bytes] maxLength:data.length];
                     if ([self.delegate respondsToSelector:@selector(connection:didSendMessage:withError:)]) {
                         if (ret < 0) {
                             [self.delegate connection:self didSendMessage:msg withError:_writeStream.streamError];
