@@ -7,7 +7,8 @@
 //
 
 #import "YHStepPointSegement.h"
-
+#import "DZObjectProxy.h"
+#import "DZWeakProxy.h"
 
 @interface YHStepPointSegement ()
 {
@@ -31,7 +32,7 @@
     if (_fireTimer) {
         [self stop];
     }
-    _fireTimer  = [NSTimer scheduledTimerWithTimeInterval:_time target:self selector:@selector(didFire) userInfo:nil repeats:NO];
+    _fireTimer  = [NSTimer scheduledTimerWithTimeInterval:_time target:[DZWeakProxy proxyWithTarget:self] selector:@selector(didFire) userInfo:nil repeats:NO];
     [[NSRunLoop mainRunLoop] addTimer:_fireTimer forMode:NSDefaultRunLoopMode];
 }
 - (void) didFire
@@ -40,7 +41,6 @@
         [self.delegate stepPointSegementDidFire:self];
     }
     [self stop];
-   
 }
 - (void) stop
 {
