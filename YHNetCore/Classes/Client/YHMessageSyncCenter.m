@@ -113,13 +113,10 @@
             feedEvent.contentURL = comment.commentImage.URL;
             //
             feedEvent.toUserID = comment.toUserName;
-            feedEvent.toUserNick = comment.toNick;
             feedEvent.replyContent = comment.replyContent;
             feedEvent.replyID = comment.replyId;
             //
             feedEvent.opUserID = comment.fromUserName;
-            feedEvent.opUserNick  = comment.fromNick;
-            feedEvent.opUserFaceURL = comment.fromFaceURL;
             feedEvent.readed = NO;
             feedEvent.date = comment.createTime;
             
@@ -141,8 +138,6 @@
             feedEvent.contentURL = comment.contentImage.URL;
             feedEvent.contentID = comment.contentId;
             feedEvent.opUserID = comment.fromUserName;
-            feedEvent.opUserNick  = comment.fromNick;
-            feedEvent.opUserFaceURL = comment.fromFaceURL;
             feedEvent.date = comment.createTime;
             feedEvent.readed = NO;
             [db updateOrInsertObject:feedEvent];
