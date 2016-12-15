@@ -10,7 +10,7 @@
 #import "YHCoreDB.h"
 #import "DZAuthSession.h"
 #import "YHAcquirRequest.h"
-#import "YHNetNotification.h"o
+#import "YHNetNotification.h"
 
 
 @implementation YHSyncMsgRequest
