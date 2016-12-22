@@ -75,7 +75,6 @@
 #ifdef DEBUG
     host = [YHDNS shareDNS].debugHost;
 #endif
-#define DEBUG
 #ifdef DEBUG
     YHEndPoint* endP0int = [[YHEndPoint alloc] initWithHost:host.ip port:host.port];
 #else
