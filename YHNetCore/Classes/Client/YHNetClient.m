@@ -203,7 +203,7 @@
 
 - (void) performRequest:(YHRequest *)request
 {
-    if ([YHNetStatus shareInstance].currentStatus == NotReachable) {
+    if (_connection.socketStatus == YHScketDisconnected || _connection.socketStatus == YHScketDisconnecting) {
         NSError* error = [NSError YH_Error:kYHNetNotnetwork reason:@"没有网络链接，请检查网络!"];
         [request onError:error];
         return;

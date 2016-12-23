@@ -24,6 +24,9 @@
 {
 @protected
     NSMutableArray * _receiveFlitersLocal;
+@private
+    NSMutableArray * _messageQueue;
+    NSRecursiveLock * _lock;
 }
 @property (nonatomic, assign) int64_t lastCookiedId;
 @property  (nonatomic, strong, readonly) NSArray * receiveFliters;
@@ -47,6 +50,8 @@
         return self;
     }
     _receiveFlitersLocal = [NSMutableArray new];
+    _messageQueue = [NSMutableArray new];
+    _lock = [NSRecursiveLock new];
     [self addReceiveFliter:[YHEventMessageFliter new]];
     return self;
 }
@@ -107,16 +112,73 @@
     return msgs;
 }
 
+- (void) onHandleReceivedRemoteMessages
+{
+    NSArray * msgs = nil;
+    NSArray *(^GetMsgs)() = ^ {
+         NSArray * msgs = [_messageQueue copy];
+        [_messageQueue removeAllObjects];
+        return msgs;
+    };
+    if ([_lock tryLock]) {
+        msgs = GetMsgs();
+        [_lock unlock];
+    } else {
+        msgs = GetMsgs();
+    }
+    if (msgs.count) {
+        DZPostNewServerMessage(@{
+                 @"messages":[msgs copy],
+        });
+    }
+#ifdef DEBUG
+    NSLog(@"Perform Notify ReceiveMessges %d", msgs.count);
+#endif
+}
+
+- (void) recivePushMessages:(NSArray *)msgs
+{
+    int remoteRequeCount = 0;
+    [_lock lock];
+    remoteRequeCount = [_messageQueue count];
+    [_lock unlock];
+    if (remoteRequeCount) {
+        [self reciveRemoteMessages:msgs];
+    } else {
+        NSArray* flitedMsgs = [self flieMessages:msgs];
+        NSArray* messages = [YHActiveDBConnection updateMessagesFromServer:flitedMsgs];
+        if (messages.count) {
+            DZPostNewServerMessage(@{
+                    @"messages":[messages copy],
+            });
+        }
+    }
+
+}
 
 - (void) reciveRemoteMessages:(NSArray*)msgs
 {
-    msgs = [self flieMessages:msgs];
-    NSArray* messages = [YHActiveDBConnection updateMessagesFromServer:msgs];
-    if (messages.count) {
-        DZPostNewServerMessage(@{
-                                 @"messages":[messages copy],
-                                 });
+    __block NSArray * flitedMsgs = msgs;
+    __block int cachedMessageCount = 0;
+    void (^ReceiveBlock)() = ^ {
+        flitedMsgs = [self flieMessages:flitedMsgs];
+        NSArray* messages = [YHActiveDBConnection updateMessagesFromServer:msgs];
+        [_messageQueue addObjectsFromArray:messages];
+        cachedMessageCount = _messageQueue.count;
+    };
+
+    if ([_lock tryLock]) {
+        ReceiveBlock();
+        [_lock unlock];
+    } else {
+        ReceiveBlock();
     }
-    
+    [NSObject cancelPreviousPerformRequestsWithTarget:self selector:@selector(onHandleReceivedRemoteMessages) object:Nil];
+    if (cachedMessageCount < 150) {
+        [self performSelector:@selector(onHandleReceivedRemoteMessages) withObject:nil afterDelay:0.3];
+    } else {
+        [self onHandleReceivedRemoteMessages];
+    }
 }
+
 @end

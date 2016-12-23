@@ -35,13 +35,13 @@
 
 - (void) onHandleError:(NSError *)error
 {
-    
+    [super onHandleError:error];
 }
 
 - (void) onHandleObject:(PushMsgRequest*)object
 {
- 
-    [[YHMessageSyncCenter shareCenter] reciveRemoteMessages:object.msgArray];
+
+    [[YHMessageSyncCenter shareCenter] recivePushMessages:object.msgArray];
     YHAcquirRequest* req = [YHAcquirRequest new];
     req.acquire.cookieId = object.cookieId;
     req.b_oneway = YES;

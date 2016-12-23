@@ -95,17 +95,22 @@
             eventCount ++;
         } else if (event.subType == EVENT_DYEING) {
             EventDyeing* dyeing = [EventDyeing parseFromData:event.subBody error:nil];
-            DZMissionTask * task = [DZMissionTask new];
-            task.startDate = [NSDate date];
-            task.endDate = [[NSDate date] dateByAddingDays:1];
-            task.name = @"upload_logs";
-            NSString * uid = dyeing.dyeingId?:@"nonid";
-            task.additions = @{@"upid":uid};
-            task.exclusive = YES;
-            [[DZMissionManager shareActiveManger] addMission:task];
-            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(5 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-                [[DZMissionManager shareActiveManger] tryTriggleMission];
-            });
+            NSString * uid = dyeing.dyeingId;
+            if (uid.length) {
+
+                DZMissionTask * task = [DZMissionTask new];
+                task.startDate = [NSDate date];
+                task.endDate = [[NSDate date] dateByAddingDays:1];
+                task.name = @"upload_logs";
+                task.additions = @{@"upid":uid};
+                task.exclusive = YES;
+                [[DZMissionManager shareActiveManger] addMission:task];
+                dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(5 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+                    [[DZMissionManager shareActiveManger] tryTriggleMission];
+                });
+            } else {
+                [[DZMissionManager shareActiveManger] completeMissionByKey:@"upload_logs"];
+            }
 
         }
     }
