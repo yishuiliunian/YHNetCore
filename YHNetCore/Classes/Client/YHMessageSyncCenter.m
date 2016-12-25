@@ -162,7 +162,7 @@
     __block int cachedMessageCount = 0;
     void (^ReceiveBlock)() = ^ {
         flitedMsgs = [self flieMessages:flitedMsgs];
-        NSArray* messages = [YHActiveDBConnection updateMessagesFromServer:msgs];
+        NSArray* messages = [YHActiveDBConnection updateMessagesFromServer:flitedMsgs];
         [_messageQueue addObjectsFromArray:messages];
         cachedMessageCount = _messageQueue.count;
     };
