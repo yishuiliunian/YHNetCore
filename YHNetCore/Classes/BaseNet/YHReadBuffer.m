@@ -31,7 +31,7 @@ int byteToInt2(Byte b[]) {
     if (!self) {
         return self;
     }
-    _dataLength = 0;
+    _aimDataLength = 0;
     _data = [NSMutableData new];
     return self;
 }
@@ -41,7 +41,7 @@ int byteToInt2(Byte b[]) {
     [_data appendBytes:bytes length:length];
 }
 
-- (int64_t) reciveDataLength
+- (int64_t) receivedDataLength
 {
     return _data.length;
 }
@@ -49,8 +49,8 @@ int byteToInt2(Byte b[]) {
 
 - (BOOL) isFull
 {
-    if (_dataLength !=0 && self.reciveDataLength != 0) {
-        if (_dataLength < self.reciveDataLength) {
+    if (_aimDataLength !=0 && self.receivedDataLength != 0) {
+        if (self.receivedDataLength < self.aimDataLength) {
             return NO;
         } else {
             return YES;

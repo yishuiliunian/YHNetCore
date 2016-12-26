@@ -354,17 +354,18 @@ static NSString* const kEventDisconnection= @"kEventDisconnection";
         readBufferPoint += 4;
         aimLength -= 4;
         length -= 4;
-        _readBuffer.dataLength = aimLength;
+        _readBuffer.aimDataLength = aimLength;
     } else {
-        aimLength = _readBuffer.dataLength;
+        aimLength = _readBuffer.aimDataLength;
     }
-    if (0 <length && ( _readBuffer.reciveDataLength + length < aimLength)) {
+    DDLogInfo(@"ReadBuffer AimLength:[%lld] CurrentLength:[%lld]", _readBuffer.aimDataLength, _readBuffer.receivedDataLength);
+    if (0 <length && ( _readBuffer.receivedDataLength + length < aimLength)) {
         [_readBuffer appendBytes:readBufferPoint length:length];
-    } else if (_readBuffer.reciveDataLength + length == aimLength) {
+    } else if (_readBuffer.receivedDataLength + length == aimLength) {
         [_readBuffer appendBytes:readBufferPoint length:length];
         CheckFull();
     } else {
-        int32_t readLength = (aimLength - _readBuffer.reciveDataLength);
+        int32_t readLength = (aimLength - _readBuffer.receivedDataLength);
         [_readBuffer appendBytes:readBufferPoint length:readLength];
         CheckFull();
         if (length - readLength < 0) {
