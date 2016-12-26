@@ -78,6 +78,10 @@ typedef NS_ENUM(NSInteger, YHSocketStatus) {
 - (BOOL) open:(NSError* __autoreleasing*) error;
 - (YHSendMessage*) messageWithCMD:(YHCmd *)cmd data:(NSData *)data headers:(NSDictionary *)headers;
 - (void) sendMessage:(YHSendMessage *)message;
+/*
+ * 删除正在队列中但是还没有发送出去的请求消息
+ * */
+- (void) removeQueuedMessageBySEQ:(int64_t)seq;
 /**
  *  关闭链接
  */

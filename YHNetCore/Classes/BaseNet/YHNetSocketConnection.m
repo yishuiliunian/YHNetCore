@@ -27,6 +27,7 @@
 #import <DZLogger/DZLogger.h>
 #import "YHNetStatus.h"
 #import "YHNetNotification.h"
+#import "DateTools.h"
 
 
 @interface YHNetSocketConnection ()
@@ -61,8 +62,7 @@
     NSInteger _currentRetryCount;
     BOOL _retrying;
     dispatch_semaphore_t _queueSemphore;
-    
-
+    NSRecursiveLock * _requestLock;
 }
 @end
 
@@ -203,6 +203,7 @@ static NSString* const kEventDisconnection= @"kEventDisconnection";
         });
     }
 }
+
 - (instancetype) initWithEndPoint:(YHEndPoint*)point
 {
     self = [super init];
@@ -214,6 +215,7 @@ static NSString* const kEventDisconnection= @"kEventDisconnection";
     _sendQueue = [NSMutableArray new];
     _readBuffer = nil;
     _socketStatus = YHScketDisconnected;
+    _requestLock = [NSRecursiveLock new];
     //
     _maxRetryCount = 3;
     _currentRetryCount = 0;
@@ -458,7 +460,10 @@ static NSString* const kEventDisconnection= @"kEventDisconnection";
 - (void) sendMessage:(YHSendMessage *)message
 {
     DDLogInfo(@"请求%@,放入队列当中 SEQ:[%lld]",message, message.seq);
-    @synchronized (_sendQueue) {
+    if ([_requestLock tryLock]) {
+        [_sendQueue addObject:message];
+        [_requestLock unlock];
+    } else {
         [_sendQueue addObject:message];
     }
     if ([self.delegate respondsToSelector:@selector(connection:enqueueSendMessage:)]) {
@@ -467,45 +472,28 @@ static NSString* const kEventDisconnection= @"kEventDisconnection";
     dispatch_semaphore_signal(_queueSemphore);
 }
 
+- (void) removeQueuedMessageBySEQ:(int64_t)seq
+{
+    [_requestLock lock];
+    NSArray * copyedQueue = [_sendQueue copy];
+    for (YHSendMessage * msg in copyedQueue) {
+        if (msg.seq == seq) {
+            [_sendQueue removeObject:msg];
+        }
+    }
+    [_requestLock unlock];
+}
+
 - (void) scheduleSend
 {
     while (!_destry) {
         
-        void(^eatSendMessage)(void) = ^(void) {
+        void(^eatSendMessage)(YHSendMessage * msg) = ^(YHSendMessage * msg) {
             @autoreleasepool {
-                YHSendMessage* msg = nil;
-                for (;;) {
-                    if (_socketStatus != YHScketConnected) {
-                        if ([UIApplication sharedApplication].applicationState == UIApplicationStateActive &&
-                            _socketStatus == YHScketDisconnected )
-                        {
-                            NSError* error;
-                            [self open:&error];
-                            if (error) {
-                                DDLogError(@"在断开的状态下进行重练%@",error);
-                            }
-                        }
-                        break;
-                    }
-                    @synchronized (_sendQueue) {
-                        if (_sendQueue.count == 0) {
-                            break;
-                        }
-                        msg = _sendQueue.firstObject;
-                        [_sendQueue removeObject:msg];
-                    }
-                    
-                    if (!msg) {
-                        break;
-                    }
-                    DDLogInfo(@"取出请求%@",msg);
-                    
                     if ([self.delegate respondsToSelector:@selector(connection:willSendMessage:)]) {
                         [self.delegate connection:self willSendMessage:msg];
                     }
-                    
                     NSData* data = [YHCodecWrapper encode:msg];
-                    
                     NSInteger ret =  [_writeStream write:[data bytes] maxLength:data.length];
                     if ([self.delegate respondsToSelector:@selector(connection:didSendMessage:withError:)]) {
                         if (ret < 0) {
@@ -517,16 +505,51 @@ static NSString* const kEventDisconnection= @"kEventDisconnection";
 #ifdef DEBUG
                     NSLog(@"Send Message %d , %@", msg.seq, msg.cmd);
 #endif
-                    break;
-                    
+                }
+        };
+
+
+        // check network
+        if (_socketStatus != YHScketConnected) {
+            //如果可以重试建立链接，则尝试去建立,如果不行则直接报错
+            if (_socketStatus != YHScketConnecting) {
+                if (( _socketStatus == YHScketDisconnected || _socketStatus == YHScketDisconnecting) &&
+                        [YHNetStatus shareInstance].currentStatus != NotReachable )
+                {
+                    NSError* error;
+                    [self open:&error];
+                    if (error) {
+                        DDLogError(@"在断开的状态下进行重练%@",error);
+                    }
+                } else {
+                    NSArray * copyedSendQueue;
+                    [_requestLock lockBeforeDate:[[NSDate date] dateByAddingMinutes:1]];
+                    copyedSendQueue = [_sendQueue copy];
+                    [_sendQueue removeAllObjects];
+                    [_requestLock unlock];
+                    for (YHSendMessage * msg in copyedSendQueue) {
+                        if ([self.delegate respondsToSelector:@selector(connection:didSendMessage:withError:)]) {
+                            NSError* error = [NSError YH_Error:kYHNetNotnetwork reason:@"没有网络链接，请检查网络!"];
+                            [self.delegate connection:self didSendMessage:msg withError:error];
+                        }
+                    }
                 }
             }
-        };
-        int count = _sendQueue.count;
-        for (int i = 0; i < count; i++) {
-            eatSendMessage();
+
+        } else { // 链接建立着，则去发送网络请求
+            NSArray * copyedSendQueue;
+            [_requestLock lockBeforeDate:[[NSDate date] dateByAddingMinutes:5]];
+            copyedSendQueue = [_sendQueue copy];
+            [_requestLock unlock];
+            for (YHSendMessage * msg in copyedSendQueue) {
+                eatSendMessage(msg);
+                [_requestLock lockBeforeDate:[[NSDate date] dateByAddingMinutes:5]];
+                [_sendQueue removeObject:msg];
+                [_requestLock unlock];
+            }
         }
         dispatch_semaphore_wait(_queueSemphore, DISPATCH_TIME_FOREVER);
+
     }
 }
 

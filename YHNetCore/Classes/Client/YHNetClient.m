@@ -146,11 +146,13 @@
                     [req onError:[NSError YH_Error:kYHNetErrorTimeOut reason:@"服务好长时间没反应，跑路了？"]];
                     _timeOutCount ++;
                     _lastTimeOutTimeSpace = CFAbsoluteTimeGetCurrent() - _lastTimeOutTimeSpace;
+                    [_connection removeQueuedMessageBySEQ:req.seq];
                     [self checkWillReconnection];
                 }
             }
         }
         [_requestCache removeObjectsForKeys:willTimeOutRequests];
+
     }
     [self tryStopTimeoutTimer];
 }
@@ -197,17 +199,14 @@
 {
     NSError* error;
     [_connection open:&error];
-    DDLogError(@"打开链接失败%@",error);
+    if (error) {
+        DDLogError(@"打开链接失败%@",error);
+    }
 }
 
 
 - (void) performRequest:(YHRequest *)request
 {
-    if (_connection.socketStatus == YHScketDisconnected || _connection.socketStatus == YHScketDisconnecting) {
-        NSError* error = [NSError YH_Error:kYHNetNotnetwork reason:@"没有网络链接，请检查网络!"];
-        [request onError:error];
-        return;
-    }
     YHCmd* cmd = [YHCmd cmdWithServant:request.servant method:request.method];
     YHSendMessage* msg = [_connection messageWithCMD:cmd data:request.requestData.data headers:request.requestHeader];
     msg.doOneWay = request.b_oneway;
