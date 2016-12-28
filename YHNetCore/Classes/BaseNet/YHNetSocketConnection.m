@@ -513,6 +513,7 @@ static NSString* const kEventDisconnection= @"kEventDisconnection";
         if (_socketStatus != YHScketConnected) {
             //如果可以重试建立链接，则尝试去建立,如果不行则直接报错
             if (_socketStatus != YHScketConnecting) {
+                DDLogInfo(@"当前的网络状态%d",[YHNetStatus shareInstance].currentStatus);
                 if (( _socketStatus == YHScketDisconnected || _socketStatus == YHScketDisconnecting) &&
                         [YHNetStatus shareInstance].currentStatus != NotReachable )
                 {
