@@ -16,7 +16,7 @@
 @property (nonatomic, strong) NSData* data;
 @property (nonatomic, assign) BOOL doOneWay;
 @property (nonatomic, strong) NSError* error;
-
+@property  (nonatomic, assign) int64_t  originDataLength;
 + (instancetype) new UNAVAILABLE_ATTRIBUTE;
 - (instancetype) init UNAVAILABLE_ATTRIBUTE;
 - (instancetype) initWithSEQ:(int64_t)seq cmd:(YHCmd*)cmd;

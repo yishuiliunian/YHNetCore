@@ -28,14 +28,9 @@ extern NSString* const kYHSkeyInvalidNotification ;
 @property (nonatomic, assign) BOOL b_oneway;
 @property (nonatomic, assign) NSTimeInterval timeout;
 @property (nonatomic, strong) Class responseObjectClass;
-
 @property (nonatomic, strong, readonly) YHFromMessage*  responseMessage;
 
-
 - (void) addHeader:(NSString*)paramter forKey:(NSString*)key;
-
-
-
 @end
 
 @interface YHRequest ()

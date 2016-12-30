@@ -440,17 +440,12 @@ static NSString* const kEventDisconnection= @"kEventDisconnection";
             break;
     }
 }
-- (int64_t) getNextSEQ
-{
-    static volatile int64_t YHGlobalMessageSendSEQ = 10001;
-    OSAtomicIncrement64(&YHGlobalMessageSendSEQ);
-    return YHGlobalMessageSendSEQ;
-}
+
 
 - (YHSendMessage*) messageWithCMD:(YHCmd *)cmd data:(NSData *)data headers:(NSDictionary *)headers
 {
     YHSendMessage* sendMsg = [YHSendMessage new];
-    sendMsg.seq = [self getNextSEQ];
+    sendMsg.seq = [YHSendMessage getNextSEQ];
     sendMsg.cmd = cmd;
     sendMsg.dataBuffer = data;
     sendMsg.headers = headers;

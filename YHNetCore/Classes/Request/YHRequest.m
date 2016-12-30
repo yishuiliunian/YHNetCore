@@ -18,6 +18,8 @@
 #import "YHRequest_SendIntereact.h"
 #import "DZGlobalEnv.h"
 #import "YHNetStatus.h"
+#import "MarsNetService.h"
+
 NSString* const kYHSkeyInvalidNotification = @"kYHSkeyInvalidNotification";
 
 @interface YHRequest ()
@@ -130,7 +132,9 @@ NSString* const kYHSkeyInvalidNotification = @"kYHSkeyInvalidNotification";
     if (_requesting) {
         return;
     }
-    [[YHNetClient shareClient] performRequest:self];
+
+   // [[YHNetClient shareClient] performRequest:self];
+    [[MarsNetService shareInstance] startRequest:self];
     _requesting = YES;
 }
 - (void) endRequest {

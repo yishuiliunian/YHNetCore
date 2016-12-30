@@ -6,6 +6,7 @@
 //
 //
 
+#import <libkern/OSAtomic.h>
 #import "YHSendMessage.h"
 #import "YHCmd.h"
 
@@ -38,4 +39,10 @@
 }
 
 
++ (int64_t) getNextSEQ
+{
+    static volatile int64_t YHGlobalMessageSendSEQ = 10001;
+    OSAtomicIncrement64(&YHGlobalMessageSendSEQ);
+    return YHGlobalMessageSendSEQ;
+}
 @end
