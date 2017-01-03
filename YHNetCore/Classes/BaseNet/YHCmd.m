@@ -30,4 +30,14 @@
     return [NSString stringWithFormat:@"Servant:%@  Method:%@", _servant, _method];
 }
 
+- (BOOL)isEqual:(YHCmd *)object {
+    if (![object isKindOfClass:[YHCmd class]]) return NO;
+    if (![self.servant isEqualToString:object.servant]) {
+        return NO;
+    }
+    if (![self.method isEqualToString:object.method]) {
+        return NO;
+    }
+    return YES;
+}
 @end
