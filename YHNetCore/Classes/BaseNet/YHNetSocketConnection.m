@@ -545,7 +545,6 @@ static NSString* const kEventDisconnection= @"kEventDisconnection";
             }
         }
         dispatch_semaphore_wait(_queueSemphore, DISPATCH_TIME_FOREVER);
-
     }
 }
 
