@@ -322,6 +322,7 @@ static NSString* const kEventDisconnection= @"kEventDisconnection";
         uint8_t *buffer = malloc(sizeof(uint8_t) * MaxReadLength);
         int64_t length =  [_readStream read:buffer maxLength:MaxReadLength];
         if (length <= 0) {
+            free(buffer);
             break;
         }
         [self deallWithBuffer:buffer length:length];
