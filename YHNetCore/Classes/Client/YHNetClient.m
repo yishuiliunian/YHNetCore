@@ -71,7 +71,7 @@
     YHHost* host = [YHDNS shareDNS].yaoheHost;
     
 #undef DEBUG
-//#define DEBUG
+#define DEBUG
 #ifdef DEBUG
     host = [YHDNS shareDNS].debugHost;
 #endif
