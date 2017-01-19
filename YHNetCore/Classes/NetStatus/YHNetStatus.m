@@ -35,7 +35,7 @@
     if (!self) {
         return self;
     }
-    _reachalility = [Reachability reachabilityWithHostName:@"www.baidu.com"];
+    _reachalility = [Reachability reachabilityWithHostName:[YHDNS shareDNS].yaoheHost.hostName];
     [_reachalility startNotifier];
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(networkChanged:) name:kReachabilityChangedNotification object:nil];
     _originNetStatus = _reachalility.currentReachabilityStatus;
